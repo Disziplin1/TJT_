@@ -8,25 +8,56 @@
     body {
       margin: 0;
       background-color: #000;
+      font-family: sans-serif;
+      text-align: center;
     }
     model-viewer {
       width: 100vw;
-      height: 100vh;
+      height: 90vh;
+    }
+    #ios-ar-link button {
+      margin-top: 12px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: #007AFF;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+
+  <!-- model-viewer: Android / iOS 공용 -->
   <model-viewer
-  src="Width_.glb"
-  ios-src="Width_.usdz"
-  ar
-  ar-modes="webxr scene-viewer quick-look"
-  auto-rotate
-  camera-controls
-  autoplay
-  shadow-intensity="0.5"
-  exposure="0.6"
-  environment-image="neutral"
->
-</model-viewer>
+    src="Width_.glb"
+    ios-src="Width_.usdz"
+    ar
+    ar-modes="scene-viewer webxr quick-look"
+    auto-rotate
+    camera-controls
+    autoplay
+    shadow-intensity="0.5"
+    exposure="0.6"
+    environment-image="neutral"
+    reveal="interaction"
+  >
+  </model-viewer>
+
+  <!-- iOS에서만 보이는 AR Quick Look 버튼 -->
+  <a id="ios-ar-link" rel="ar" href="Width_.usdz">
+    <button>iOS에서 AR 보기</button>
+  </a>
+
+  <!-- 플랫폼 체크 스크립트 -->
+  <script>
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!isIOS) {
+      const iosButton = document.getElementById("ios-ar-link");
+      if (iosButton) iosButton.style.display = "none";
+    }
+  </script>
+
+</body>
 </html>
