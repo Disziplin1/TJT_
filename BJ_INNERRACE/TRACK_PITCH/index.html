@@ -32,18 +32,28 @@
 
   <script>
     const viewer = document.getElementById("viewer");
-    let hasPlayedOnce = false;
 
-    // 애니메이션 1회 끝나면 멈추기 (loop 방지)
-    viewer.addEventListener('animation-finished', () => {
-      hasPlayedOnce = true;
-      viewer.pause();
+    let animationPlaying = false;   // 현재 애니메이션이 실행 중인지 여부
+    let allowUserPlay = false;      // 사용자가 클릭해서 재생할 수 있는 상태인지 여부
+
+    // 페이지 로드되면 자동 1회 재생 시작
+    viewer.addEventListener('load', () => {
+      viewer.play();
+      animationPlaying = true;
     });
 
-    // 그 이후 터치하면 수동 재생
+    // 자동 재생이 끝나면 멈추고 다시 못 돌게 설정
+    viewer.addEventListener('animation-finished', () => {
+      viewer.pause();
+      animationPlaying = false;
+      allowUserPlay = true;
+    });
+
+    // 클릭 시 재생 (단, 이미 재생 중이거나 아직 허용 전이면 무시)
     viewer.addEventListener('click', () => {
-      if (hasPlayedOnce) {
+      if (!animationPlaying && allowUserPlay) {
         viewer.play();
+        animationPlaying = true;
       }
     });
   </script>
