@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>TRACK PITCH & 외경동심도 측정기</title>
+  <title>TRACK PITCH & 외경중심도 측정기</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     body {
@@ -16,16 +16,34 @@
   </style>
 </head>
 <body>
+
   <model-viewer
-  src="TRACK_PITCH.glb"
-  ar
-  ar-modes="webxr scene-viewer quick-look"
-  auto-rotate
-  camera-controls
-  autoplay
-  shadow-intensity="0.8"
-  exposure="0.6"
-  environment-image="neutral"
->
-</model-viewer>
+    id="viewer"
+    src="TRACK_PITCH.glb"
+    ar
+    ar-modes="webxr scene-viewer"
+    auto-rotate
+    camera-controls
+    autoplay
+    shadow-intensity="0.8"
+    exposure="0.6"
+    environment-image="neutral">
+  </model-viewer>
+
+  <script>
+    const viewer = document.getElementById("viewer");
+    let hasPlayedOnce = false;
+
+    viewer.addEventListener('animation-finished', () => {
+      hasPlayedOnce = true;
+    });
+
+    viewer.addEventListener('click', () => {
+      if (hasPlayedOnce) {
+        viewer.play();
+      }
+    });
+  </script>
+
+</body>
 </html>
