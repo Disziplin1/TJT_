@@ -25,7 +25,6 @@
     auto-rotate
     camera-controls
     autoplay
-    animation-loop="false"
     shadow-intensity="0.8"
     exposure="0.6"
     environment-image="neutral">
@@ -35,10 +34,13 @@
     const viewer = document.getElementById("viewer");
     let hasPlayedOnce = false;
 
+    // 애니메이션 1회 끝나면 멈추기 (loop 방지)
     viewer.addEventListener('animation-finished', () => {
       hasPlayedOnce = true;
+      viewer.pause();
     });
 
+    // 그 이후 터치하면 수동 재생
     viewer.addEventListener('click', () => {
       if (hasPlayedOnce) {
         viewer.play();
