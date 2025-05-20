@@ -17,35 +17,15 @@
 </head>
 <body>
   <model-viewer
-    id="viewer"
-    src="Mounting_Distance.glb"
-    ar
-    ar-modes="webxr scene-viewer quick-look"
-    camera-controls
-    auto-rotate
-    shadow-intensity="0.8"
-    exposure="0.6"
-    environment-image="neutral"
-  >
-  </model-viewer>
-
-  <script>
-    const viewer = document.getElementById('viewer');
-
-    const firstAnimation = 'Action 1';
-    const secondAnimation = 'Action 2';
-
-    viewer.addEventListener('load', () => {
-      viewer.animationName = firstAnimation;
-      viewer.play();
-    });
-
-    viewer.addEventListener('finished', () => {
-      if (viewer.animationName === firstAnimation) {
-        viewer.animationName = secondAnimation;
-        viewer.play();
-      }
-    });
-  </script>
-</body>
+  src="Mounting_Distance3.glb"
+  ar
+  ar-modes="webxr scene-viewer quick-look"
+  auto-rotate
+  camera-controls
+  autoplay
+  shadow-intensity="0.8"
+  exposure="0.6"
+  environment-image="neutral"
+>
+</model-viewer>
 </html>
