@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>외경 심위치 측정기</title>
+  <title>장착거리 검사 GAUGE</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
     body {
@@ -17,15 +17,35 @@
 </head>
 <body>
   <model-viewer
-  src="Outer_Diameter.glb"
-  ar
-  ar-modes="webxr scene-viewer quick-look"
-  auto-rotate
-  camera-controls
-  autoplay
-  shadow-intensity="0.8"
-  exposure="0.6"
-  environment-image="neutral"
->
-</model-viewer>
+    id="viewer"
+    src="Mounting_Distance.glb"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    camera-controls
+    auto-rotate
+    shadow-intensity="0.8"
+    exposure="0.6"
+    environment-image="neutral"
+  >
+  </model-viewer>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+
+    const firstAnimation = 'Action 1';
+    const secondAnimation = 'Action 2';
+
+    viewer.addEventListener('load', () => {
+      viewer.animationName = firstAnimation;
+      viewer.play();
+    });
+
+    viewer.addEventListener('finished', () => {
+      if (viewer.animationName === firstAnimation) {
+        viewer.animationName = secondAnimation;
+        viewer.play();
+      }
+    });
+  </script>
+</body>
 </html>
