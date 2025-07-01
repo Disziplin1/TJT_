@@ -7,24 +7,93 @@
   <style>
     body {
       margin: 0;
-      background-color: #dcdcdc;
+      background-color: #f5f5f5;
+      font-family: sans-serif;
+      text-align: center;
     }
     model-viewer {
       width: 100vw;
-      height: 100vh;
+      height: 80vh;
+      display: block;
+      margin: 0 auto;
+    }
+    .controls {
+      margin-top: 10px;
+    }
+    input[type="range"] {
+      width: 60%;
+    }
+    .timecode {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #333;
     }
   </style>
 </head>
 <body>
   <model-viewer
-  src="ID_Based.glb"
-  ar
-  ar-modes="webxr scene-viewer quick-look"
-  camera-controls
-  autoplay
-  shadow-intensity="0.8"
-  exposure="0.8"
-  environment-image="neutral"
->
-</model-viewer>
+    id="viewer"
+    src="ID_Based.glb"  <!-- 여기에 현재 폴더의 glb 파일명으로 수정 -->
+    camera-controls
+    shadow-intensity="0.8"
+    exposure="0.9"
+    environment-image="neutral"
+    interaction-prompt="none">
+  </model-viewer>
+
+  <div class="controls">
+    <button onclick="playFromStart()">▶ 처음부터</button>
+    <button onclick="resumeAnimation()">🔁 계속</button>
+    <button onclick="pauseAnimation()">⏸ 정지</button>
+    <br /><br />
+    <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
+    <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+  </div>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+    const seekBar = document.getElementById('seekBar');
+    const timeDisplay = document.getElementById('timeDisplay');
+    let animationFrameId;
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function updateSeekBar() {
+      const progress = viewer.currentTime / viewer.duration;
+      seekBar.value = progress;
+
+      const current = formatTime(viewer.currentTime);
+      const total = formatTime(viewer.duration || 0);
+      timeDisplay.textContent = `${current} / ${total}`;
+
+      animationFrameId = requestAnimationFrame(updateSeekBar);
+    }
+
+    seekBar.addEventListener('input', () => {
+      viewer.currentTime = seekBar.value * viewer.duration;
+    });
+
+    function playFromStart() {
+      viewer.currentTime = 0;
+      viewer.play();
+      cancelAnimationFrame(animationFrameId);
+      updateSeekBar();
+    }
+
+    function resumeAnimation() {
+      viewer.play();
+      cancelAnimationFrame(animationFrameId);
+      updateSeekBar();
+    }
+
+    function pauseAnimation() {
+      viewer.pause();
+      cancelAnimationFrame(animationFrameId);
+    }
+  </script>
+</body>
 </html>
