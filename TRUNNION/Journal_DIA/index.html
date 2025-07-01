@@ -43,8 +43,7 @@
   </model-viewer>
 
   <div class="controls">
-    <button onclick="resumeAnimation()">▶ 재생</button>
-    <button onclick="pauseAnimation()">⏸ 정지</button>
+    <button id="toggleBtn">⏸ 정지</button>
     <br /><br />
     <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
     <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
@@ -54,7 +53,9 @@
     const viewer = document.getElementById('viewer');
     const seekBar = document.getElementById('seekBar');
     const timeDisplay = document.getElementById('timeDisplay');
+    const toggleBtn = document.getElementById('toggleBtn');
     let animationFrameId;
+    let isPlaying = true;
 
     function formatTime(seconds) {
       const min = Math.floor(seconds / 60);
@@ -66,10 +67,7 @@
       if (viewer.duration) {
         const progress = viewer.currentTime / viewer.duration;
         seekBar.value = progress;
-
-        const current = formatTime(viewer.currentTime);
-        const total = formatTime(viewer.duration);
-        timeDisplay.textContent = `${current} / ${total}`;
+        timeDisplay.textContent = `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
       }
       animationFrameId = requestAnimationFrame(updateSeekBar);
     }
@@ -78,23 +76,24 @@
       viewer.currentTime = seekBar.value * viewer.duration;
     });
 
-    function playFromStart() {
-      viewer.currentTime = 0;
-      viewer.play();
-      cancelAnimationFrame(animationFrameId);
-      updateSeekBar();
-    }
+    toggleBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        viewer.pause();
+        toggleBtn.textContent = '▶ 재생';
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        viewer.play();
+        toggleBtn.textContent = '⏸ 정지';
+        cancelAnimationFrame(animationFrameId);
+        updateSeekBar();
+      }
+      isPlaying = !isPlaying;
+    });
 
-    function resumeAnimation() {
-      viewer.play();
-      cancelAnimationFrame(animationFrameId);
+    // 초기 자동 재생일 때 seek bar 업데이트 시작
+    window.addEventListener('DOMContentLoaded', () => {
       updateSeekBar();
-    }
-
-    function pauseAnimation() {
-      viewer.pause();
-      cancelAnimationFrame(animationFrameId);
-    }
+    });
   </script>
 </body>
 </html>
