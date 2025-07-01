@@ -33,7 +33,7 @@
 <body>
   <model-viewer
     id="viewer"
-    src="ID_Based.glb"  <!-- 여기에 현재 폴더의 glb 파일명으로 수정 -->
+    src="ID_Based.glb"
     camera-controls
     shadow-intensity="0.8"
     exposure="0.9"
@@ -63,13 +63,14 @@
     }
 
     function updateSeekBar() {
-      const progress = viewer.currentTime / viewer.duration;
-      seekBar.value = progress;
+      if (viewer.duration) {
+        const progress = viewer.currentTime / viewer.duration;
+        seekBar.value = progress;
 
-      const current = formatTime(viewer.currentTime);
-      const total = formatTime(viewer.duration || 0);
-      timeDisplay.textContent = `${current} / ${total}`;
-
+        const current = formatTime(viewer.currentTime);
+        const total = formatTime(viewer.duration);
+        timeDisplay.textContent = `${current} / ${total}`;
+      }
       animationFrameId = requestAnimationFrame(updateSeekBar);
     }
 
