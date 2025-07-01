@@ -60,14 +60,14 @@
     function formatTime(seconds) {
       const min = Math.floor(seconds / 60);
       const sec = Math.floor(seconds % 60);
-      return ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')};
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     }
 
     function updateSeekBar() {
       if (viewer.duration) {
         const progress = viewer.currentTime / viewer.duration;
         seekBar.value = progress;
-        timeDisplay.textContent = ${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)};
+        timeDisplay.textContent = `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
       }
       animationFrameId = requestAnimationFrame(updateSeekBar);
     }
@@ -90,7 +90,6 @@
       isPlaying = !isPlaying;
     });
 
-    // 초기 자동 재생일 때 seek bar 업데이트 시작
     window.addEventListener('DOMContentLoaded', () => {
       updateSeekBar();
     });
