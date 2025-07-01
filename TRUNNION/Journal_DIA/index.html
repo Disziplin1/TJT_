@@ -2,81 +2,98 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>저널DIA단면거리(연삭거리) 측정기</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>저널DIA단면거리(연삭거리) 측정기</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
-    html, body {
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
       margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: sans-serif;
       background-color: #f5f5f5;
+      font-family: sans-serif;
+    }
+
+    .viewer-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      height: 80vh; /* 화면 높이의 80% */
+      margin: 0 auto;
+      background-color: #fff;
     }
 
     model-viewer {
-      width: 100vw;
-      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
     }
 
     .controls {
       position: absolute;
-      bottom: 20px;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
-      max-width: 600px;
-      background-color: #f5f5f5;
+      background-color: rgba(255, 255, 255, 0.7); /* 반투명 배경 */
+      padding: 8px;
+      border-radius: 10px;
+      z-index: 2;
       text-align: center;
-      padding: 10px 15px;
-      box-sizing: border-box;
     }
 
-    button {
-      font-size: 1.2em;
+    .controls button {
+      font-size: 1em;
       padding: 0.4em 1em;
+      margin-bottom: 6px;
     }
 
-    input[type="range"] {
+    .controls input[type="range"] {
       width: 100%;
-      height: 1.2em;
-      margin-top: 10px;
     }
 
     .timecode {
-      margin-top: 5px;
-      font-size: 1em;
+      font-size: 0.9em;
       color: #333;
+      margin-top: 4px;
     }
 
     @media (max-width: 480px) {
-      button {
-        font-size: 1em;
+      .controls button {
+        font-size: 0.9em;
         padding: 0.3em 0.8em;
       }
+
       .timecode {
-        font-size: 0.9em;
+        font-size: 0.8em;
       }
     }
   </style>
 </head>
 <body>
-  <model-viewer
-    id="viewer"
-    src="https://disziplin1.github.io/TJT_/TRUNNION/Journal_DIA/Journal_DIA.glb"
-    camera-controls
-    autoplay
-    shadow-intensity="0.8"
-    exposure="0.9"
-    environment-image="neutral"
-    interaction-prompt="none">
-  </model-viewer>
 
-  <div class="controls">
-    <button id="toggleBtn">❚❚ 정지</button>
-    <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
-    <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+  <div class="viewer-wrapper">
+    <model-viewer
+      id="viewer"
+      src="https://disziplin1.github.io/TJT_/TRUNNION/Journal_DIA/Journal_DIA.glb"
+      camera-controls
+      autoplay
+      shadow-intensity="0.8"
+      exposure="0.9"
+      environment-image="neutral"
+      interaction-prompt="none">
+    </model-viewer>
+
+    <div class="controls">
+      <button id="toggleBtn">❚❚ 정지</button>
+      <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
+      <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+    </div>
   </div>
 
   <script>
