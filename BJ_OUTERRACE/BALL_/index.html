@@ -2,29 +2,144 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BALL 높이 측정기</title>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <style>
-    body {
-      margin: 0;
-      background-color: #dcdcdc;
+    * {
+      box-sizing: border-box;
     }
-    model-viewer {
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden; /* 스크롤 방지 */
+      background-color: #f5f5f5;
+      font-family: sans-serif;
+    }
+
+    .viewer-wrapper {
       width: 100vw;
-      height: 100vh;
+      height: 100dvh; /* 진짜 화면 높이 */
+      position: relative;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 8px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10;
+
+      /* 기본: PC는 마우스 hover 시 표시 */
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .viewer-wrapper:hover .controls {
+      opacity: 1;
+    }
+
+    .controls button {
+      font-size: 1em;
+      padding: 0.4em 1em;
+      margin-bottom: 6px;
+    }
+
+    .controls input[type="range"] {
+      width: 100%;
+    }
+
+    .timecode {
+      font-size: 0.9em;
+      color: #333;
+      margin-top: 4px;
+    }
+
+    /* 모바일은 항상 표시 */
+    @media (hover: none) and (pointer: coarse) {
+      .controls {
+        opacity: 1 !important;
+      }
     }
   </style>
 </head>
 <body>
-  <model-viewer
-  src="BALL_.glb"
-  ar
-  ar-modes="webxr scene-viewer quick-look"
-  camera-controls
-  autoplay
-  shadow-intensity="0.8"
-  exposure="0.8"
-  environment-image="neutral"
->
-</model-viewer>
+  <div class="viewer-wrapper">
+    <model-viewer
+      id="viewer"
+      src="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/BALL_/BALL_.glb"
+      camera-controls
+      autoplay
+      shadow-intensity="0.8"
+      exposure="0.9"
+      environment-image="neutral"
+      interaction-prompt="none">
+    </model-viewer>
+
+    <div class="controls">
+      <button id="toggleBtn">❚❚ 정지</button>
+      <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
+      <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+    </div>
+  </div>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+    const seekBar = document.getElementById('seekBar');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const toggleBtn = document.getElementById('toggleBtn');
+    let animationFrameId;
+    let isPlaying = true;
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function updateSeekBar() {
+      if (viewer.duration) {
+        const progress = viewer.currentTime / viewer.duration;
+        seekBar.value = progress;
+        timeDisplay.textContent = `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
+      }
+      animationFrameId = requestAnimationFrame(updateSeekBar);
+    }
+
+    seekBar.addEventListener('input', () => {
+      viewer.currentTime = seekBar.value * viewer.duration;
+    });
+
+    toggleBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        viewer.pause();
+        toggleBtn.textContent = '▶ 재생';
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        viewer.play();
+        toggleBtn.textContent = '❚❚ 정지';
+        updateSeekBar();
+      }
+      isPlaying = !isPlaying;
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateSeekBar();
+    });
+  </script>
+</body>
 </html>
