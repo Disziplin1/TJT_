@@ -9,31 +9,20 @@
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
       background-color: #f5f5f5;
       font-family: sans-serif;
+    }
+
+    .wrapper {
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
     }
 
     model-viewer {
       width: 100%;
-      height: calc(100vh - 140px);
-      flex-shrink: 0;
-    }
-
-    /* 태블릿 (예: 아이패드) */
-    @media (min-width: 768px) and (max-width: 1024px) {
-      model-viewer {
-        height: calc(100vh - 100px);
-      }
-    }
-
-    /* 모바일 */
-    @media (max-width: 480px) {
-      model-viewer {
-        height: calc(100vh - 160px);
-      }
+      flex-grow: 1;
+      max-height: 85vh; /* 너무 크면 controls가 밀림 */
     }
 
     .controls {
@@ -41,9 +30,9 @@
       max-width: 600px;
       margin: 0 auto;
       padding: 10px 20px;
-      background-color: #f5f5f5;
       box-sizing: border-box;
       text-align: center;
+      background-color: #f5f5f5;
     }
 
     button {
@@ -75,21 +64,23 @@
   </style>
 </head>
 <body>
-  <model-viewer
-    id="viewer"
-    src="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/ID_Based/ID_Based.glb"
-    camera-controls
-    autoplay
-    shadow-intensity="0.8"
-    exposure="0.9"
-    environment-image="neutral"
-    interaction-prompt="none">
-  </model-viewer>
+  <div class="wrapper">
+    <model-viewer
+      id="viewer"
+      src="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/ID_Based/ID_Based.glb"
+      camera-controls
+      autoplay
+      shadow-intensity="0.8"
+      exposure="0.9"
+      environment-image="neutral"
+      interaction-prompt="none">
+    </model-viewer>
 
-  <div class="controls">
-    <button id="toggleBtn">❚❚ 정지</button>
-    <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
-    <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+    <div class="controls">
+      <button id="toggleBtn">❚❚ 정지</button>
+      <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
+      <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+    </div>
   </div>
 
   <script>
