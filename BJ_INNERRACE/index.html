@@ -123,7 +123,7 @@
 
     const modelList = [
       'https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_/PCD_.glb',
-      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/VC_/',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/VC_/VC_.glb',
       'https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_VC_/PCD_VC_.glb',
       'https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_PITCH/TRACK_PITCH.glb',
       'https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_/TRACK_.glb',
@@ -135,7 +135,7 @@
     ];
 
     const repeatCount = 1;
-    const pauseBetweenModels = -0.5;
+    const pauseBeforeNextModel = 1000; // 1초 대기
     let currentIndex = 0;
     let autoTimer = null;
     let animationFrameId;
@@ -184,10 +184,16 @@
       viewer.addEventListener('load', () => {
         viewer.play();
         const duration = (viewer.duration || 5) * 1000 * repeatCount;
+
         autoTimer = setTimeout(() => {
-          currentIndex = (currentIndex + 1) % modelList.length;
-          setTimeout(() => playModel(currentIndex), pauseBetweenModels);
-        }, duration);
+          viewer.pause(); // ⏸ 먼저 잠시 멈춤
+
+          setTimeout(() => {
+            currentIndex = (currentIndex + 1) % modelList.length;
+            playModel(currentIndex); // ▶ 다음 모델 로드
+          }, pauseBeforeNextModel); // 1초 대기 후 실행
+
+        }, duration - 100); // 약간 일찍 멈추기 (끊김 방지용)
       }, { once: true });
     }
 
