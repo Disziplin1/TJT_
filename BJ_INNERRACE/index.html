@@ -242,14 +242,14 @@
           viewer.play();
           toggleBtn.textContent = '❚❚ 정지';
           updateSeekBar();
-          const remaining = (viewer.duration - viewer.currentTime) * 500;
+          const remaining = (viewer.duration - viewer.currentTime) * 1000;
           autoTimer = setTimeout(() => {
             viewer.pause();
             setTimeout(() => {
               currentIndex = (currentIndex + 1) % modelList.length;
               playModel(currentIndex);
             }, pauseBeforeNextModel);
-          }, remaining - 100);
+          }, remaining - 500);
         }
         isPlaying = !isPlaying;
       });
