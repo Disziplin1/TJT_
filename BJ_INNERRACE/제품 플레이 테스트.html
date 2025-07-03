@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D 모델 뷰어</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #f5f5f5;
+      font-family: sans-serif;
+    }
+
+    .viewer-wrapper {
+      width: 100vw;
+      height: 100dvh;
+      position: relative;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background-color: #f5f5f5;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 8px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .viewer-wrapper:hover .controls {
+      opacity: 1;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .controls button {
+      font-size: 1em;
+      padding: 0.4em 1em;
+      border: none;
+      border-radius: 6px;
+      background-color: #f5f5f5;
+      color: black;
+      cursor: pointer;
+      box-shadow: 0 0 3px rgba(0,0,0,0.2);
+    }
+
+    .nav-button {
+      background-color: #f5f5f5;
+      color: black;
+    }
+
+    .controls input[type="range"] {
+      width: 100%;
+    }
+
+    .timecode {
+      font-size: 0.9em;
+      color: #333;
+      margin-top: 4px;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .controls {
+        opacity: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="viewer-wrapper">
+    <model-viewer
+      id="viewer"
+      src=""
+      camera-controls
+      autoplay
+      shadow-intensity="0.8"
+      exposure="0.9"
+      environment-image="neutral"
+      interaction-prompt="none">
+    </model-viewer>
+
+    <div class="controls">
+      <div class="button-row">
+        <button class="nav-button" id="prevBtn">◀</button>
+        <button id="toggleBtn">❚❚ 정지</button>
+        <button class="nav-button" id="nextBtn">▶</button>
+      </div>
+      <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0">
+      <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+    </div>
+  </div>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+    const seekBar = document.getElementById('seekBar');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    const modelList = [
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_/PCD_.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/VC_/',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_VC_/PCD_VC_.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_PITCH/TRACK_PITCH.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_/TRACK_.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/Inner_Diameter/Inner_Diameter.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Dia/Outer_Dia.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/Diagonal_PCD/Diagonal_PCD.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Diameter/Outer_Diameter.glb',
+      'https://disziplin1.github.io/TJT_/BJ_INNERRACE/Mounting_Distance/Mounting_Distance.glb'
+    ];
+
+    const repeatCount = 1;
+    const pauseBetweenModels = 2000;
+    let currentIndex = 0;
+    let autoTimer = null;
+    let animationFrameId;
+    let isPlaying = true;
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function updateSeekBar() {
+      if (viewer.duration) {
+        const progress = viewer.currentTime / viewer.duration;
+        seekBar.value = progress;
+        timeDisplay.textContent = `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
+      }
+      animationFrameId = requestAnimationFrame(updateSeekBar);
+    }
+
+    seekBar.addEventListener('input', () => {
+      viewer.currentTime = seekBar.value * viewer.duration;
+    });
+
+    toggleBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        viewer.pause();
+        toggleBtn.textContent = '▶ 재생';
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        viewer.play();
+        toggleBtn.textContent = '❚❚ 정지';
+        updateSeekBar();
+      }
+      isPlaying = !isPlaying;
+    });
+
+    function playModel(index) {
+      if (autoTimer) clearTimeout(autoTimer);
+      viewer.src = modelList[index];
+      viewer.currentTime = 0;
+      viewer.play();
+      isPlaying = true;
+      toggleBtn.textContent = '❚❚ 정지';
+
+      viewer.addEventListener('load', () => {
+        viewer.play();
+        const duration = (viewer.duration || 5) * 1000 * repeatCount;
+        autoTimer = setTimeout(() => {
+          currentIndex = (currentIndex + 1) % modelList.length;
+          setTimeout(() => playModel(currentIndex), pauseBetweenModels);
+        }, duration);
+      }, { once: true });
+    }
+
+    prevBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + modelList.length) % modelList.length;
+      playModel(currentIndex);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % modelList.length;
+      playModel(currentIndex);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      playModel(currentIndex);
+      updateSeekBar();
+    });
+  </script>
+</body>
+</html>
