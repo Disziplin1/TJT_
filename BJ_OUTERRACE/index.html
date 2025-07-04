@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BJ 외륜 측정기</title>
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
+    <style>
+        html,body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f5f5f5;
+            font-family: sans-serif;
+        }
+
+        .viewer-wrapper {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #modelName {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            z-index: 20;
+            font-size: 3rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            background-color: rgba(50, 50, 50, 0.5);
+            color: white;
+            border-radius: 8px;
+        }
+
+        .logo {
+            position: absolute;
+            top: 40px;
+            right: 50px;
+            z-index: 20;
+            width: 200px;
+            height: auto;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 8px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .viewer-wrapper:hover .controls,
+      .viewer-wrapper:hover .zoom-slider {
+        opacity: 1;
+      }
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .controls button {
+            font-size: 1em;
+            padding: 0.4em 1em;
+            border: none;
+            border-radius: 6px;
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+
+        .controls input[type="range"] {width: 100%;}
+        .timecode {font-size: 0.9em; color: #333; margin-top: 4px;}
+        .zoom-slider {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%) rotate(-90deg);
+        z-index: 15;
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .zoom-slider label {
+        transform: rotate(90deg);
+        color: #333;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .zoom-slider input[type="range"] {
+        width: 150px;
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        .controls, .zoom-slider {
+          opacity: 1 !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="viewer-wrapper">
+      <model-viewer
+        id="viewer"
+        src=""
+        camera-controls
+        disable-zoom
+        autoplay
+        shadow-intensity="0.8"
+        exposure="0.9"
+        environment-image="neutral"
+        interaction-prompt="none"
+        camera-orbit="0deg 90deg 100%"
+        field-of-view="25deg"
+      >
+      </model-viewer>
+
+      <div id="modelName">제품명</div>
+      <img
+        src="https://tjteng.co.kr/images/tjteng.png"
+        alt="TJT 로고"
+        class="logo"
+      />
+      <div class="zoom-slider">
+        <label for="zoomSlider">Zoom</label>
+        <input type="range" id="zoomSlider" min="0" max="100" value="10" />
+      </div>
+
+      <div class="controls">
+        <div class="button-row">
+          <button class="nav-button" id="prevBtn">◀</button>
+          <button id="toggleBtn">❚❚ 정지</button>
+          <button class="nav-button" id="nextBtn">▶</button>
+        </div>
+        <input
+          type="range"
+          id="seekBar"
+          min="0"
+          max="1"
+          step="0.001"
+          value="0"
+        />
+        <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+      </div>
+    </div>
+
+    <script>
+              const viewer = document.getElementById('viewer');
+              const modelNameBox = document.getElementById('modelName');
+              const seekBar = document.getElementById('seekBar');
+              const timeDisplay = document.getElementById('timeDisplay');
+              const toggleBtn = document.getElementById('toggleBtn');
+              const prevBtn = document.getElementById('prevBtn');
+              const nextBtn = document.getElementById('nextBtn');
+
+              const modelList = [
+                  { name: "BALL 높이 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/BALL_/BALL_.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "BJ CW GAUGE", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CW_GAUGE/CW_GAUGE.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "CENTER 동심도 측정기(RUN-OUT측정기)", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/RUN_OUT/RUN_OUT.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "PCD 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PCD_/PCD_.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "PIN HOLE GAUGE", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PIN_HOLE/PIN_HOLE.glb", cameraOrbit: "45deg 70deg 120%" },
+                  { name: "R형상 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Radius_Profile/Radius_Profile.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "SCREW RING GAUGE", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SCREW_RING/BJ_OUTERRACE.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "SPLINE PITCH ERROR GAUGE", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SPLINE_PITCH/SPLINE_PITCH.glb" , cameraOrbit: "45deg 70deg 120%"},
+                  { name: "TRACK 심위치 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/TRACK_/TRACK_.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "VC 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/VC_/VC_.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "내경 심위치 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Inner_Diameter/Inner_Diameter.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "내경기준외경동심도", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Diameter_Based/Diameter_Based.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "내경동심도&피치에러 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/ID_Pitch/ID_Pitch.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "센터 깊이(확인) 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CONTACT_GAUGE/CONTACT_GAUGE.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "스플라인 장착거리 측정기", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Spline_Mounting/Spline_Mounting.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "코킹검사게이지", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Caulking_/Caulking_.glb", cameraOrbit: "45deg 70deg 80%" },
+                  { name: "트랙기준외경동심도", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Track_Based/Track_Based.glb", cameraOrbit: "45deg 70deg 80%" }
+              ];
+
+              const repeatCount = 1;
+              const pauseBeforeNextModel = 1000;
+              let currentIndex = 0;
+              let autoTimer = null;
+              let animationFrameId;
+              let isPlaying = true;
+
+              zoomSlider.addEventListener('input', () => {
+              const zoomValue = parseInt(zoomSlider.value);
+              const zoomPercent = 110 - zoomValue;
+              viewer.setAttribute('camera-orbit', `0deg 90deg ${zoomPercent}%`);
+            });
+
+              function formatTime(seconds) {
+              const min = Math.floor(seconds / 60);
+              const sec = Math.floor(seconds % 60);
+              return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+            }
+
+            function updateSeekBar() {
+              if (viewer.duration) {
+                const progress = viewer.currentTime / viewer.duration;
+                seekBar.value = progress;
+                timeDisplay.textContent = `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
+              }
+              animationFrameId = requestAnimationFrame(updateSeekBar);
+            }
+
+            seekBar.addEventListener('input', () => {
+              viewer.currentTime = seekBar.value * viewer.duration;
+              if (autoTimer) clearTimeout(autoTimer);
+              if (isPlaying) {
+                const remaining = (viewer.duration - viewer.currentTime) * 1000;
+                autoTimer = setTimeout(() => {
+                  viewer.pause();
+                  setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % modelList.length;
+                    playModel(currentIndex);
+                  }, pauseBeforeNextModel);
+                }, remaining - 100);
+              }
+            });
+
+            toggleBtn.addEventListener('click', () => {
+              if (isPlaying) {
+                viewer.pause();
+                toggleBtn.textContent = '▶ 재생';
+                cancelAnimationFrame(animationFrameId);
+                if (autoTimer) clearTimeout(autoTimer);
+              } else {
+                viewer.play();
+                toggleBtn.textContent = '❚❚ 정지';
+                updateSeekBar();
+                const remaining = (viewer.duration - viewer.currentTime) * 1000;
+                autoTimer = setTimeout(() => {
+                  viewer.pause();
+                  setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % modelList.length;
+                    playModel(currentIndex);
+                  }, pauseBeforeNextModel);
+                }, remaining - 500);
+              }
+              isPlaying = !isPlaying;
+            });
+
+            function monitorPlayback() {
+              if (isPlaying && viewer.currentTime >= viewer.duration - 0.05) {
+                viewer.pause();
+                setTimeout(() => {
+                  currentIndex = (currentIndex + 1) % modelList.length;
+                  playModel(currentIndex);
+                }, pauseBeforeNextModel);
+                return;
+              }
+              requestAnimationFrame(monitorPlayback);
+            }
+
+            function playModel(index) {
+              if (autoTimer) clearTimeout(autoTimer);
+              const model = modelList[index];
+              viewer.src = model.url;
+              modelNameBox.textContent = model.name;
+              viewer.currentTime = 0;
+              viewer.play();
+              isPlaying = true;
+              toggleBtn.textContent = '❚❚ 정지';
+
+              viewer.addEventListener('load', () => {
+                viewer.play();
+                updateSeekBar();
+                monitorPlayback();
+              }, { once: true });
+            }
+      function playModel(index) {
+                  if (autoTimer) clearTimeout(autoTimer);
+                  const model = modelList[index];
+                  viewer.src = model.url;
+                  modelNameBox.textContent = model.name;
+
+                  viewer.addEventListener('load', () => {
+                      viewer.setAttribute('camera-orbit', model.cameraOrbit || '0deg 90deg 100%');
+                      viewer.play();
+                      updateSeekBar();
+                      monitorPlayback();
+                  }, { once: true });
+              }
+            prevBtn.addEventListener('click', () => {
+              currentIndex = (currentIndex - 1 + modelList.length) % modelList.length;
+              playModel(currentIndex);
+            });
+
+            nextBtn.addEventListener('click', () => {
+              currentIndex = (currentIndex + 1) % modelList.length;
+              playModel(currentIndex);
+            });
+
+            window.addEventListener('DOMContentLoaded', () => {
+              playModel(currentIndex);
+            });
+    </script>
+  </body>
+</html>
