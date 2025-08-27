@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>홈폭 스냅 게이지</title>
+  <script type="module" defer src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    html, body { margin:0; height:100%; background:#f5f5f5; }
+    model-viewer { width:100vw; height:100dvh; display:block; }
+    .floating-btn{
+      position:fixed; right:1rem; bottom:1rem;
+      padding:.6rem .9rem; border:0; border-radius:.6rem;
+      background:rgba(0,0,0,.6); color:#fff; cursor:pointer;
+    }
+    .floating-btn:focus-visible{ outline:3px solid rgba(0,194,255,.5); }
+    @media (prefers-reduced-motion: reduce){
+      model-viewer { --auto-rotate: 0; }
+    }
+  </style>
+</head>
+<body>
+  <model-viewer
+    id="viewer"
+    src="https://disziplin1.github.io/TJT_/GAUGE_/Groove_Width/Groove_Width.glb"
+    camera-controls
+    autoplay
+    auto-rotate
+    rotation-per-second="-15deg"   
+    auto-rotate-delay="0"          
+    shadow-intensity="0.8"
+    exposure="0.9"
+    environment-image="neutral"
+    interaction-prompt="none"
+    aria-label="CW Gauge 3D 모델 뷰어">
+  </model-viewer>
+
+  <button id="toggleRotate" class="floating-btn" aria-pressed="true">자동회전 끄기</button>
+
+  <script>
+    const viewer = document.getElementById('viewer');
+    const btn = document.getElementById('toggleRotate');
+
+    const syncLabel = () => {
+      const on = viewer.autoRotate === true; // JS 속성명은 camelCase
+      btn.textContent = on ? '자동회전 끄기' : '자동회전 켜기';
+      btn.setAttribute('aria-pressed', String(on));
+    };
+
+    btn.addEventListener('click', () => {
+      viewer.autoRotate = !viewer.autoRotate; // 토글
+      syncLabel();
+    });
+
+    // 초기 상태 라벨 동기화
+    document.addEventListener('DOMContentLoaded', syncLabel);
+  </script>
+</body>
+</html>
