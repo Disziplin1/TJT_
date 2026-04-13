@@ -121,6 +121,18 @@
       }
 
       .timecode { font-size: 0.9em; color: #333; margin-top: 2px; }
+    
+      /* ── PC: hover 표시 / 터치: 항상 표시 ── */
+      @media (hover: hover) and (pointer: fine) {
+        .ctrl-toggle { display: none; }
+        .viewer-wrapper:hover .controls  { opacity: 1; pointer-events: auto; }
+        .viewer-wrapper:hover .zoom-slider { opacity: 1; pointer-events: auto; }
+      }
+      @media (hover: none) and (pointer: coarse) {
+        .ctrl-toggle { display: none; }
+        .controls    { opacity: 1 !important; pointer-events: auto !important; }
+        .zoom-slider { opacity: 1 !important; pointer-events: auto !important; }
+      }
     </style>
   </head>
 
