@@ -158,129 +158,115 @@
     </div>
 
     <script>
-      const viewer = document.getElementById('viewer');
-      const zoomSlider = document.getElementById('zoomSlider');
+      const viewer       = document.getElementById('viewer');
+      const zoomSlider   = document.getElementById('zoomSlider');
       const modelNameBox = document.getElementById('modelName');
-      const seekBar = document.getElementById('seekBar');
-      const timeDisplay = document.getElementById('timeDisplay');
-      const toggleBtn = document.getElementById('toggleBtn');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
+      const seekBar      = document.getElementById('seekBar');
+      const timeDisplay  = document.getElementById('timeDisplay');
+      const toggleBtn    = document.getElementById('toggleBtn');
+      const prevBtn      = document.getElementById('prevBtn');
+      const nextBtn      = document.getElementById('nextBtn');
 
       const modelList = [
-        { name: "1.PCD전용 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_/PCD_.glb" },
-        { name: "2.VC전용 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/VC_/VC_.glb" },
-        { name: "3.PCD & VC 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_VC_/PCD_VC_.glb" },
+        { name: "1.PCD전용 측정기",                 url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_/PCD_.glb" },
+        { name: "2.VC전용 측정기",                  url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/VC_/VC_.glb" },
+        { name: "3.PCD & VC 측정기",                url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_VC_/PCD_VC_.glb" },
         { name: "4.TRACK PITCH & 외경동심도 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_PITCH/TRACK_PITCH.glb" },
-        { name: "5.TRACK 심위치 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_/TRACK_.glb" },
-        { name: "6.내경기준트랙동심도 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Inner_Diameter/Inner_Diameter.glb" },
-        { name: "7.외경DIA 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Dia/Outer_Dia.glb" },
-        { name: "8.대각 PCD 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Diagonal_PCD/Diagonal_PCD.glb" },
-        { name: "9.외경 심위치 측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Diameter/Outer_Diameter.glb" },
-        { name: "10.장착거리 검사 GAUGE", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Mounting_Distance/Mounting_Distance.glb" },
-        { name: "11.외경대각경측정기", url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/OD_Diagonal_Caliper/OD_Diagonal_Caliper.glb" }
+        { name: "5.TRACK 심위치 측정기",            url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_/TRACK_.glb" },
+        { name: "6.내경기준트랙동심도 측정기",        url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Inner_Diameter/Inner_Diameter.glb" },
+        { name: "7.외경DIA 측정기",                 url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Dia/Outer_Dia.glb" },
+        { name: "8.대각 PCD 측정기",                url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Diagonal_PCD/Diagonal_PCD.glb" },
+        { name: "9.외경 심위치 측정기",              url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Diameter/Outer_Diameter.glb" },
+        { name: "10.장착거리 검사 GAUGE",            url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/Mounting_Distance/Mounting_Distance.glb" },
+        { name: "11.외경대각경측정기",               url: "https://disziplin1.github.io/TJT_/BJ_INNERRACE/OD_Diagonal_Caliper/OD_Diagonal_Caliper.glb" }
       ];
 
-      const repeatCount = 1;
-      const pauseBeforeNextModel = 1000;
+      const PAUSE_BETWEEN = 1000;
       let currentIndex = 0;
-      let autoTimer = null;
-      let animationFrameId;
-      let isPlaying = true;
+      let isPlaying    = true;
+      let rafId        = null;
+      let pendingNext  = null;
+      let loadGen      = 0;
 
-      zoomSlider.addEventListener('input', () => {
-        const zoomValue = parseInt(zoomSlider.value);
-        const zoomPercent = 110 - zoomValue;
-        viewer.setAttribute('camera-orbit', `0deg 90deg ${zoomPercent}%`);
-      });
-
-      /*viewer.addEventListener('wheel', (e) => {
-        const delta = Math.sign(e.deltaY);
-        let zoom = parseInt(zoomSlider.value);
-        zoom = Math.min(100, Math.max(10, zoom + delta * 5)); // 아래로 스크롤 → 확대
-        zoomSlider.value = zoom;
-        const zoomPercent = 110 - zoom;
-        viewer.setAttribute('camera-orbit', `0deg 90deg ${zoomPercent}%`);
-      });*/
-
-      function formatTime(seconds) {
-        const min = Math.floor(seconds / 60);
-        const sec = Math.floor(seconds % 60);
-        return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      /* 진행 중인 RAF·타이머 전부 취소 */
+      function cancelAll() {
+        if (rafId)      { cancelAnimationFrame(rafId); rafId = null; }
+        if (pendingNext){ clearTimeout(pendingNext);   pendingNext = null; }
       }
 
-      function updateSeekBar() {
+      function formatTime(s) {
+        const m = Math.floor(s / 60);
+        return `${String(m).padStart(2,'0')}:${String(Math.floor(s % 60)).padStart(2,'0')}`;
+      }
+
+      /* seekBar 업데이트 + 종료 감지 → 하나의 루프로 통합 */
+      function tick() {
         if (viewer.duration) {
-          const progress = viewer.currentTime / viewer.duration;
-          seekBar.value = progress;
-          timeDisplay.textContent = `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
-        }
-        animationFrameId = requestAnimationFrame(updateSeekBar);
-      }
+          seekBar.value = viewer.currentTime / viewer.duration;
+          timeDisplay.textContent =
+            `${formatTime(viewer.currentTime)} / ${formatTime(viewer.duration)}`;
 
-      seekBar.addEventListener('input', () => {
-        viewer.currentTime = seekBar.value * viewer.duration;
-        if (autoTimer) clearTimeout(autoTimer);
-        if (isPlaying) {
-          const remaining = (viewer.duration - viewer.currentTime) * 1000;
-          autoTimer = setTimeout(() => {
+          if (isPlaying && viewer.currentTime >= viewer.duration - 0.05) {
+            cancelAll();
             viewer.pause();
-            setTimeout(() => {
+            pendingNext = setTimeout(() => {
+              pendingNext  = null;
               currentIndex = (currentIndex + 1) % modelList.length;
               playModel(currentIndex);
-            }, pauseBeforeNextModel);
-          }, remaining - 100);
+            }, PAUSE_BETWEEN);
+            return;
+          }
+        }
+        rafId = requestAnimationFrame(tick);
+      }
+
+      /* 줌 */
+      zoomSlider.addEventListener('input', () => {
+        viewer.setAttribute('camera-orbit',
+          `0deg 90deg ${110 - parseInt(zoomSlider.value)}%`);
+      });
+
+      /* 시크바 */
+      seekBar.addEventListener('input', () => {
+        if (!viewer.duration) return;
+        cancelAll();
+        viewer.currentTime = parseFloat(seekBar.value) * viewer.duration;
+        if (isPlaying) {
+          viewer.play();
+          rafId = requestAnimationFrame(tick);
         }
       });
 
+      /* 재생/정지 */
       toggleBtn.addEventListener('click', () => {
         if (isPlaying) {
+          cancelAll();
           viewer.pause();
           toggleBtn.textContent = '▶ 재생';
-          cancelAnimationFrame(animationFrameId);
-          if (autoTimer) clearTimeout(autoTimer);
         } else {
           viewer.play();
           toggleBtn.textContent = '❚❚ 정지';
-          updateSeekBar();
-          const remaining = (viewer.duration - viewer.currentTime) * 1000;
-          autoTimer = setTimeout(() => {
-            viewer.pause();
-            setTimeout(() => {
-              currentIndex = (currentIndex + 1) % modelList.length;
-              playModel(currentIndex);
-            }, pauseBeforeNextModel);
-          }, remaining - 500);
+          rafId = requestAnimationFrame(tick);
         }
         isPlaying = !isPlaying;
       });
 
-      function monitorPlayback() {
-        if (isPlaying && viewer.currentTime >= viewer.duration - 0.05) {
-          viewer.pause();
-          setTimeout(() => {
-            currentIndex = (currentIndex + 1) % modelList.length;
-            playModel(currentIndex);
-          }, pauseBeforeNextModel);
-          return;
-        }
-        requestAnimationFrame(monitorPlayback);
-      }
-
+      /* 모델 로드 & 재생 */
       function playModel(index) {
-        if (autoTimer) clearTimeout(autoTimer);
+        cancelAll();
+        const gen   = ++loadGen;
         const model = modelList[index];
-        viewer.src = model.url;
+
+        viewer.src               = model.url;
         modelNameBox.textContent = model.name;
-        viewer.currentTime = 0;
-        viewer.play();
-        isPlaying = true;
-        toggleBtn.textContent = '❚❚ 정지';
+        isPlaying                = true;
+        toggleBtn.textContent    = '❚❚ 정지';
 
         viewer.addEventListener('load', () => {
+          if (gen !== loadGen) return; // 더 최신 playModel이 호출됐으면 무시
+          viewer.currentTime = 0;
           viewer.play();
-          updateSeekBar();
-          monitorPlayback();
+          rafId = requestAnimationFrame(tick);
         }, { once: true });
       }
 
@@ -294,11 +280,7 @@
         playModel(currentIndex);
       });
 
-      window.addEventListener('DOMContentLoaded', () => {
-        playModel(currentIndex);
-      });
+      window.addEventListener('DOMContentLoaded', () => playModel(currentIndex));
     </script>
   </body>
 </html>
-
-
