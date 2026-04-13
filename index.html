@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>TJT 측정기 뷰어</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --accent: #b65fcf;
+      --accent2: #7c4dff;
+      --text: #e8eaf0;
+      --muted: #8890a8;
+      --border: #2a2d3e;
+      --radius: 14px;
+      --shadow: rgba(0,0,0,.4);
+    }
+    [data-theme="light"] {
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface2: #eef0f8;
+      --text: #1a1d2e;
+      --muted: #6b7280;
+      --border: #dde1ef;
+      --shadow: rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .25s, color .25s;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.2rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background .25s, border-color .25s;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: .8rem;
+    }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .95rem; color: #fff;
+      flex-shrink: 0;
+    }
+    h1 { font-size: 1.1rem; font-weight: 700; }
+    h1 span { color: var(--accent); }
+
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: .4rem;
+      align-items: center;
+    }
+    .icon-btn {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { border-color: var(--accent); }
+    .edit-btn.active {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-color: transparent;
+      color: #fff;
+    }
+
+    /* ── EDIT BANNER ── */
+    .edit-banner {
+      display: none;
+      background: linear-gradient(135deg, var(--accent2)22, var(--accent)22);
+      border: 1px solid var(--accent)66;
+      border-radius: 10px;
+      padding: .5rem .9rem;
+      font-size: .78rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin: .8rem 1.2rem .2rem;
+      text-align: center;
+    }
+    .edit-banner.visible { display: block; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: .3rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: .6rem;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex-shrink: 0;
+      padding: .45rem .9rem;
+      border-radius: 20px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+    }
+    .tab:hover { color: var(--text); background: var(--surface2); }
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #fff;
+    }
+    .tab .drag-handle {
+      display: none;
+      cursor: grab;
+      opacity: .6;
+      font-size: .8rem;
+    }
+    body.edit-mode .tab .drag-handle { display: inline; }
+    body.edit-mode .tab { cursor: default; }
+
+    /* Sortable ghost */
+    .sortable-ghost { opacity: .35; }
+    .sortable-chosen { box-shadow: 0 4px 16px var(--shadow); }
+
+    /* ── MAIN ── */
+    main { padding: 1.2rem; max-width: 960px; margin: 0 auto; }
+
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: 1rem;
+    }
+    .section-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      flex-shrink: 0;
+    }
+    .section-title { font-size: 1rem; font-weight: 700; }
+    .section-sub { color: var(--muted); font-size: .8rem; margin-left: auto; }
+
+    /* ── CARD GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: .7rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem .8rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .5rem;
+      text-align: center;
+      transition: background .2s, border-color .2s, transform .18s, box-shadow .18s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      position: relative;
+    }
+    .card:hover, .card:focus {
+      background: var(--surface2);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(182,95,207,.2);
+      outline: none;
+    }
+    .card:active { transform: scale(.96); }
+
+    /* Edit mode card */
+    body.edit-mode .card {
+      cursor: grab;
+      border-style: dashed;
+      border-color: var(--accent)66;
+    }
+    body.edit-mode .card:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    body.edit-mode .card::before {
+      content: '⠿';
+      position: absolute;
+      top: .4rem; right: .4rem;
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .card-name { font-size: .78rem; font-weight: 600; line-height: 1.3; }
+    .card-en   { font-size: .68rem; color: var(--muted); line-height: 1.2; }
+
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: .75rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+      .card { padding: .7rem .5rem; gap: .35rem; }
+
+    }
+    @media (min-width: 600px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">TJT</div>
+    <h1>측정기 <span>3D</span> 뷰어</h1>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeBtn" title="테마 전환">🌙</button>
+      <button class="icon-btn edit-btn" id="editBtn" title="편집 모드">✏️</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-target="bjo"><span class="drag-handle">⠿</span>BJ 외륜</button>
+    <button class="tab" data-target="bji"><span class="drag-handle">⠿</span>BJ 내륜</button>
+    <button class="tab" data-target="bjc"><span class="drag-handle">⠿</span>BJ 케이지</button>
+    <button class="tab" data-target="cj"><span class="drag-handle">⠿</span>CJ 외륜</button>
+    <button class="tab" data-target="sk"><span class="drag-handle">⠿</span>SK 외륜</button>
+    <button class="tab" data-target="tj"><span class="drag-handle">⠿</span>TJ 외륜</button>
+    <button class="tab" data-target="trun"><span class="drag-handle">⠿</span>트러니언</button>
+    <button class="tab" data-target="gauge"><span class="drag-handle">⠿</span>게이지</button>
+  </nav>
+</header>
+
+<div class="edit-banner" id="editBanner">✏️ 편집 모드 — 탭과 카드를 드래그해서 순서를 변경하세요</div>
+
+<main>
+
+  <!-- ── GAUGE ── -->
+  <section class="section" id="gauge">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">게이지 (GAUGE)</span>
+      <span class="section-sub">7종</span>
+    </div>
+    <div class="grid cat-gauge">
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/C_SNAP_GAUGE/" target="_blank">
+        <div class="card-name">C형 스냅게이지</div>
+        <div class="card-en">C_SNAP_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/Distance_Gauge/" target="_blank">
+        <div class="card-name">장착거리 게이지</div>
+        <div class="card-en">Distance_Gauge</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/Groove_Snap_Gauge/" target="_blank">
+        <div class="card-name">홈경 스냅 게이지</div>
+        <div class="card-en">Groove_Snap_Gauge</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/Groove_Width/" target="_blank">
+        <div class="card-name">홈폭 스냅 게이지</div>
+        <div class="card-en">Groove_Width</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/Plug_Gauge/" target="_blank">
+        <div class="card-name">플러그 게이지</div>
+        <div class="card-en">Plug_Gauge</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/SNAP_GAUGE/" target="_blank">
+        <div class="card-name">일반 스냅게이지</div>
+        <div class="card-en">SNAP_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/GAUGE_/Width_Gauge/" target="_blank">
+        <div class="card-name">폭 게이지</div>
+        <div class="card-en">Width_Gauge</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── BJ INNERRACE ── -->
+  <section class="section" id="bji">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">BJ 내륜 (BJ INNERRACE)</span>
+      <span class="section-sub">12종</span>
+    </div>
+    <div class="grid cat-bji">
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/" target="_blank">
+        <div class="card-name">BJ 내륜 측정기</div>
+        <div class="card-en">BJ_INNERRACE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/Diagonal_PCD/" target="_blank">
+        <div class="card-name">대각 PCD 측정기</div>
+        <div class="card-en">Diagonal_PCD</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/Inner_Diameter/" target="_blank">
+        <div class="card-name">내경기준트랙동심도 측정기</div>
+        <div class="card-en">Inner_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/Mounting_Distance/" target="_blank">
+        <div class="card-name">장착거리 검사 GAUGE</div>
+        <div class="card-en">Mounting_Distance</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/OD_Diagonal_Caliper/" target="_blank">
+        <div class="card-name">외경대각경측정기</div>
+        <div class="card-en">OD_Diagonal_Caliper</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Dia/" target="_blank">
+        <div class="card-name">외경DIA 측정기</div>
+        <div class="card-en">Outer_Dia</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/Outer_Diameter/" target="_blank">
+        <div class="card-name">외경 심위치 측정기</div>
+        <div class="card-en">Outer_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_/" target="_blank">
+        <div class="card-name">PCD 전용 측정기</div>
+        <div class="card-en">PCD_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/PCD_VC_/" target="_blank">
+        <div class="card-name">PCD&amp;VC 측정기</div>
+        <div class="card-en">PCD_VC_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_/" target="_blank">
+        <div class="card-name">TRACK 심위치 측정기</div>
+        <div class="card-en">TRACK_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/TRACK_PITCH/" target="_blank">
+        <div class="card-name">TRACK PITCH &amp; 외경동심도 측정기</div>
+        <div class="card-en">TRACK_PITCH</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/VC_/" target="_blank">
+        <div class="card-name">VC 전용 측정기</div>
+        <div class="card-en">VC_</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── BJ OUTERRACE ── -->
+  <section class="section visible" id="bjo">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">BJ 외륜 (BJ OUTERRACE)</span>
+      <span class="section-sub">19종</span>
+    </div>
+    <div class="grid cat-bjo">
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/" target="_blank">
+        <div class="card-name">BJ 외륜 측정기</div>
+        <div class="card-en">BJ_OUTERRACE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/BALL_/" target="_blank">
+        <div class="card-name">BALL 높이 측정기</div>
+        <div class="card-en">BALL_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CONTACT_Gauge/" target="_blank">
+        <div class="card-name">센터 깊이(확인) 측정기</div>
+        <div class="card-en">CONTACT_Gauge</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CW_GAUGE/" target="_blank">
+        <div class="card-name">BJ CW GAUGE</div>
+        <div class="card-en">CW_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Caulking_/" target="_blank">
+        <div class="card-name">코킹검사게이지</div>
+        <div class="card-en">Caulking_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Diameter_Based/" target="_blank">
+        <div class="card-name">내경기준외경동심도</div>
+        <div class="card-en">Diameter_Based</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/ID_Pitch/" target="_blank">
+        <div class="card-name">내경동심도&amp;피치에러 측정기</div>
+        <div class="card-en">ID_Pitch</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Inner_Diameter/" target="_blank">
+        <div class="card-name">내경 심위치 측정기</div>
+        <div class="card-en">Inner_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PCD_/" target="_blank">
+        <div class="card-name">PCD 측정기</div>
+        <div class="card-en">PCD_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PIN_HOLE/" target="_blank">
+        <div class="card-name">PIN HOLE GAUGE</div>
+        <div class="card-en">PIN_HOLE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/RUN_OUT/" target="_blank">
+        <div class="card-name">CENTER 동심도 측정기</div>
+        <div class="card-en">RUN_OUT</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Radius_Profile/" target="_blank">
+        <div class="card-name">R형상 측정기</div>
+        <div class="card-en">Radius_Profile</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SCREW_RING/" target="_blank">
+        <div class="card-name">SCREW RING GAUGE</div>
+        <div class="card-en">SCREW_RING</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SPLINE_PITCH/" target="_blank">
+        <div class="card-name">SPLINE PITCH ERROR GAUGE</div>
+        <div class="card-en">SPLINE_PITCH</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SPLINE_RING/" target="_blank">
+        <div class="card-name">SPLINE RING GAUGE</div>
+        <div class="card-en">SPLINE_RING</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Spline_Mounting/" target="_blank">
+        <div class="card-name">스플라인 장착거리 측정기</div>
+        <div class="card-en">Spline_Mounting</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/TRACK_/" target="_blank">
+        <div class="card-name">TRACK 심위치 측정기</div>
+        <div class="card-en">TRACK_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Track_Based/" target="_blank">
+        <div class="card-name">트랙기준외경동심도</div>
+        <div class="card-en">Track_Based</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/VC_/" target="_blank">
+        <div class="card-name">VC 측정기</div>
+        <div class="card-en">VC_</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── BJ CAGE ── -->
+  <section class="section" id="bjc">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">BJ 케이지 (BJ CAGE)</span>
+      <span class="section-sub">6종</span>
+    </div>
+    <div class="grid cat-bjc">
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_CAGE/DIA_GAUGE/" target="_blank">
+        <div class="card-name">내경DIA 측정기</div>
+        <div class="card-en">DIA_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_CAGE/ID_Based/" target="_blank">
+        <div class="card-name">내경기준외경동심도 측정기</div>
+        <div class="card-en">ID_Based</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_CAGE/Inner_Diameter/" target="_blank">
+        <div class="card-name">내경심위치 측정기</div>
+        <div class="card-en">Inner_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_CAGE/Outer_Dia/" target="_blank">
+        <div class="card-name">외경DIA 측정기</div>
+        <div class="card-en">Outer_Dia</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_CAGE/Outer_Diameter/" target="_blank">
+        <div class="card-name">외경 심위치 측정기</div>
+        <div class="card-en">Outer_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_CAGE/Width_/" target="_blank">
+        <div class="card-name">창폭&amp;창위치 측정기</div>
+        <div class="card-en">Width_</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── CJ OUTERRACE ── -->
+  <section class="section" id="cj">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">CJ 외륜 (CJ OUTERRACE)</span>
+      <span class="section-sub">4종</span>
+    </div>
+    <div class="grid cat-cj">
+      <a class="card" href="https://disziplin1.github.io/TJT_/CJ_OUTERRACE/4Ball_PCD/" target="_blank">
+        <div class="card-name">4BALL PCD(4구식) 측정기</div>
+        <div class="card-en">4Ball_PCD</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/CJ_OUTERRACE/Mutual_/" target="_blank">
+        <div class="card-name">상호차 측정기</div>
+        <div class="card-en">Mutual_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/CJ_OUTERRACE/PCD_/" target="_blank">
+        <div class="card-name">PCD 측정기</div>
+        <div class="card-en">PCD_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/CJ_OUTERRACE/VC_/" target="_blank">
+        <div class="card-name">VC 측정기</div>
+        <div class="card-en">VC_</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── SK OUTERRACE ── -->
+  <section class="section" id="sk">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">SK 외륜 (SK OUTERRACE)</span>
+      <span class="section-sub">1종</span>
+    </div>
+    <div class="grid cat-sk">
+      <a class="card" href="https://disziplin1.github.io/TJT_/SK_OUTERRACE/TRACK_/" target="_blank">
+        <div class="card-name">TRACK기준 동심도 측정기</div>
+        <div class="card-en">TRACK_</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── TJ OUTERRACE ── -->
+  <section class="section" id="tj">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">TJ 외륜 (TJ OUTERRACE)</span>
+      <span class="section-sub">11종</span>
+    </div>
+    <div class="grid cat-tj">
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/CHAMFER_/" target="_blank">
+        <div class="card-name">CHAMFER부 단차 측정기</div>
+        <div class="card-en">CHAMFER_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/CW_GAUGE/" target="_blank">
+        <div class="card-name">CW GAUGE</div>
+        <div class="card-en">CW_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/Cross_Sectional/" target="_blank">
+        <div class="card-name">단면&amp;전장 측정기</div>
+        <div class="card-en">Cross_Sectional</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/DIA_GAUGE/" target="_blank">
+        <div class="card-name">DIA 동축도 GAUGE</div>
+        <div class="card-en">DIA_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/GROOVE/" target="_blank">
+        <div class="card-name">GROOVE 단차 측정기</div>
+        <div class="card-en">GROOVE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/Globe_Valve/" target="_blank">
+        <div class="card-name">글로브 홈경 게이지</div>
+        <div class="card-en">Globe_Valve</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/Groove_g/" target="_blank">
+        <div class="card-name">대그루브경 게이지</div>
+        <div class="card-en">Groove_g</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/ID_Based/" target="_blank">
+        <div class="card-name">소재내경기준 외경동심도 측정기</div>
+        <div class="card-en">ID_Based</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/Outer_Diameter/" target="_blank">
+        <div class="card-name">외경 측정기</div>
+        <div class="card-en">Outer_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/Spherometer/" target="_blank">
+        <div class="card-name">구면거리 측정기</div>
+        <div class="card-en">Spherometer</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TJ_OUTERRACE/TAPER_CHAMFER/" target="_blank">
+        <div class="card-name">TAPER(CHAMFER)부 기준단차 검사 GAUGE</div>
+        <div class="card-en">TAPER_CHAMFER</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── TRUNNION ── -->
+  <section class="section" id="trun">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">트러니언 (TRUNNION)</span>
+      <span class="section-sub">11종</span>
+    </div>
+    <div class="grid cat-trun">
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Angle_Divider/" target="_blank">
+        <div class="card-name">분할각(각도) 측정기</div>
+        <div class="card-en">Angle_Divider</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Ball_/" target="_blank">
+        <div class="card-name">볼높이 측정기</div>
+        <div class="card-en">Ball_</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Center_Based/" target="_blank">
+        <div class="card-name">내경기준(센터기준) 단면거리 측정기</div>
+        <div class="card-en">Center_Based</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Chamfer_gauge/" target="_blank">
+        <div class="card-name">CHAMFER부 단차 게이지</div>
+        <div class="card-en">Chamfer_gauge</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/GROOVE_GAUGE/" target="_blank">
+        <div class="card-name">GROOVE 편심 검사 GAUGE</div>
+        <div class="card-en">GROOVE_GAUGE</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Groove_Checker/" target="_blank">
+        <div class="card-name">GROOVE 홈 조립 검사 측정기</div>
+        <div class="card-en">Groove_Checker</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Journal_DIA/" target="_blank">
+        <div class="card-name">저널DIA단면거리(연삭거리) 측정기</div>
+        <div class="card-en">Journal_DIA</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Journal_Diameter/" target="_blank">
+        <div class="card-name">저널상하차(DIA상하차) 측정기</div>
+        <div class="card-en">Journal_Diameter</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/Load_Unload/" target="_blank">
+        <div class="card-name">상하차 전용 측정기</div>
+        <div class="card-en">Load_Unload</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/OD_R_gauge/" target="_blank">
+        <div class="card-name">외경R게이지(내경기준 외경동심도)</div>
+        <div class="card-en">OD_R_gauge</div>
+      </a>
+      <a class="card" href="https://disziplin1.github.io/TJT_/TRUNNION/PCR_/" target="_blank">
+        <div class="card-name">PCR 측정기</div>
+        <div class="card-en">PCR_</div>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>TJT 측정기 3D 뷰어 &nbsp;|&nbsp; 총 71종</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+  /* ── 탭 전환 ── */
+  const tabsEl   = document.getElementById('tabs');
+  const sections = document.querySelectorAll('.section');
+  let currentTab = 'bjo';
+
+  function switchTab(target) {
+    currentTab = target;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.target === target));
+    sections.forEach(s => s.classList.toggle('visible', s.id === target));
+    // 편집 모드면 현재 섹션 카드도 sortable 적용
+    if (document.body.classList.contains('edit-mode')) {
+      enableCardSort(target);
+    }
+  }
+
+  tabsEl.addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    const target = tab.dataset.target;
+    if (!target) return;
+    // 편집 모드 아닐 때만 링크처럼 동작
+    if (!document.body.classList.contains('edit-mode')) {
+      switchTab(target);
+      tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  });
+
+  /* ── 테마 토글 ── */
+  const themeBtn = document.getElementById('themeBtn');
+  const html     = document.documentElement;
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
+    localStorage.setItem('tjt_theme', theme);
+  }
+
+  themeBtn.addEventListener('click', () => {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // 저장된 테마 복원
+  const savedTheme = localStorage.getItem('tjt_theme');
+  if (savedTheme) applyTheme(savedTheme);
+
+  /* ── 편집 모드 ── */
+  const editBtn    = document.getElementById('editBtn');
+  const editBanner = document.getElementById('editBanner');
+  let tabSortable  = null;
+  const cardSortables = {};
+
+  function saveTabOrder() {
+    const order = [...document.querySelectorAll('.tab')].map(t => t.dataset.target);
+    localStorage.setItem('tjt_tab_order', JSON.stringify(order));
+  }
+
+  function saveCardOrder(sectionId) {
+    const grid = document.querySelector(`#${sectionId} .grid`);
+    if (!grid) return;
+    const order = [...grid.querySelectorAll('.card')].map(c => c.getAttribute('href'));
+    localStorage.setItem(`tjt_cards_${sectionId}`, JSON.stringify(order));
+  }
+
+  function enableCardSort(sectionId) {
+    if (cardSortables[sectionId]) return;
+    const grid = document.querySelector(`#${sectionId} .grid`);
+    if (!grid) return;
+    cardSortables[sectionId] = new Sortable(grid, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd: () => saveCardOrder(sectionId)
+    });
+  }
+
+  function disableCardSort(sectionId) {
+    if (cardSortables[sectionId]) {
+      cardSortables[sectionId].destroy();
+      delete cardSortables[sectionId];
+    }
+  }
+
+  editBtn.addEventListener('click', () => {
+    const isEdit = document.body.classList.toggle('edit-mode');
+    editBtn.classList.toggle('active', isEdit);
+    editBanner.classList.toggle('visible', isEdit);
+    editBtn.textContent = isEdit ? '✅' : '✏️';
+
+    if (isEdit) {
+      // 탭 정렬 활성화
+      tabSortable = new Sortable(tabsEl, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        filter: '.active',  // 현재 활성 탭은 드래그 제외
+        onEnd: () => {
+          saveTabOrder();
+          // 첫 번째 탭을 active로 맞추지 않고 현재 active 유지
+        }
+      });
+      // 현재 보이는 섹션 카드 정렬 활성화
+      enableCardSort(currentTab);
+    } else {
+      // 탭 정렬 비활성화
+      if (tabSortable) { tabSortable.destroy(); tabSortable = null; }
+      // 모든 카드 정렬 비활성화
+      Object.keys(cardSortables).forEach(id => disableCardSort(id));
+    }
+  });
+
+  /* ── 저장된 순서 복원 ── */
+  function restoreTabOrder() {
+    const saved = localStorage.getItem('tjt_tab_order');
+    if (!saved) return;
+    try {
+      const order = JSON.parse(saved);
+      order.forEach(target => {
+        const tab = tabsEl.querySelector(`[data-target="${target}"]`);
+        if (tab) tabsEl.appendChild(tab);
+      });
+    } catch(e) {}
+  }
+
+  function restoreCardOrder(sectionId) {
+    const saved = localStorage.getItem(`tjt_cards_${sectionId}`);
+    if (!saved) return;
+    try {
+      const order = JSON.parse(saved);
+      const grid = document.querySelector(`#${sectionId} .grid`);
+      if (!grid) return;
+      order.forEach(href => {
+        const card = grid.querySelector(`[href="${href}"]`);
+        if (card) grid.appendChild(card);
+      });
+    } catch(e) {}
+  }
+
+  // 모든 섹션 순서 복원
+  restoreTabOrder();
+  ['gauge','bji','bjo','bjc','cj','sk','tj','trun'].forEach(restoreCardOrder);
+
+  // 편집모드 아닐 때 카드 클릭 → 링크 열기 정상 동작 보장
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (document.body.classList.contains('edit-mode')) {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
