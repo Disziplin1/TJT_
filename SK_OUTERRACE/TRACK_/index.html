@@ -44,14 +44,11 @@
       text-align: center;
       z-index: 10;
 
-      /* 기본: PC는 마우스 hover 시 표시 */
       opacity: 0;
+      pointer-events: none;
       transition: opacity 0.3s;
     }
-
-    .viewer-wrapper:hover .controls {
-      opacity: 1;
-    }
+    .controls.show { opacity: 1; pointer-events: auto; }
 
     .controls button {
       font-size: 1em;
@@ -68,14 +65,26 @@
       color: #333;
       margin-top: 4px;
     }
-
-    /* 모바일은 항상 표시 */
-    @media (hover: none) and (pointer: coarse) {
-      .controls {
-        opacity: 1 !important;
+  
+      /* ── 컨트롤 토글 버튼 (항상 표시) ── */
+      .ctrl-toggle {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 30;
+        width: 48px; height: 48px;
+        border-radius: 14px;
+        border: none;
+        background: rgba(0,0,0,.55);
+        color: #fff;
+        font-size: 1.3rem;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        backdrop-filter: blur(4px);
+        transition: background .2s;
       }
-    }
-  </style>
+      .ctrl-toggle.active { background: rgba(182,95,207,.85); }
+    </style>
 </head>
 <body>
   <div class="viewer-wrapper">
@@ -90,6 +99,9 @@
       interaction-prompt="none"
       camera-orbit="200deg 60deg auto">
     </model-viewer>
+
+    <button id="ctrlToggle" class="ctrl-toggle" title="컨트롤 표시/숨기기">⏵</button>
+
 
     <div class="controls">
       <button id="toggleBtn">❚❚ 정지</button>
@@ -141,6 +153,18 @@
     window.addEventListener('DOMContentLoaded', () => {
       updateSeekBar();
     });
+
+      /* ── 컨트롤 토글 ── */
+      const ctrlToggle = document.getElementById('ctrlToggle');
+      const controlsEl = document.querySelector('.controls');
+      function setControls(show) {
+        controlsEl.classList.toggle('show', show);
+        ctrlToggle.classList.toggle('active', show);
+        ctrlToggle.textContent = show ? '✕' : '⏵';
+      }
+      ctrlToggle.addEventListener('click', () => setControls(!controlsEl.classList.contains('show')));
+      if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) setControls(true);
+
   </script>
 </body>
 </html>
