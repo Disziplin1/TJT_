@@ -52,7 +52,6 @@
         height: auto;
       }
 
-      /* ── 컨트롤 토글 버튼 (항상 표시) ── */
       .ctrl-toggle {
         position: absolute;
         bottom: 1rem;
@@ -132,11 +131,11 @@
       .zoom-slider input[type="range"] {
         width: 150px;
       }
-    
+
       /* ── PC: hover 표시 / 터치: 항상 표시 ── */
       @media (hover: hover) and (pointer: fine) {
         .ctrl-toggle { display: none; }
-        .viewer-wrapper:hover .controls  { opacity: 1; pointer-events: auto; }
+        .viewer-wrapper:hover .controls   { opacity: 1; pointer-events: auto; }
         .viewer-wrapper:hover .zoom-slider { opacity: 1; pointer-events: auto; }
       }
       @media (hover: none) and (pointer: coarse) {
@@ -184,21 +183,14 @@
           <button id="toggleBtn">❚❚ 정지</button>
           <button class="nav-button" id="nextBtn">▶</button>
         </div>
-        <input
-          type="range"
-          id="seekBar"
-          min="0"
-          max="1"
-          step="0.001"
-          value="0"
-        />
+        <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0" />
         <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
       </div>
     </div>
 
     <script>
       const viewer       = document.getElementById('viewer');
-      const zoomSlider   = document.getElementById('zoomSlider');  /* ← 선언 추가 */
+      const zoomSlider   = document.getElementById('zoomSlider');
       const modelNameBox = document.getElementById('modelName');
       const seekBar      = document.getElementById('seekBar');
       const timeDisplay  = document.getElementById('timeDisplay');
@@ -207,23 +199,23 @@
       const nextBtn      = document.getElementById('nextBtn');
 
       const modelList = [
-        { name: "BALL 높이 측정기",                    url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/BALL_/BALL_.glb",                         cameraOrbit: "45deg 70deg 80%"  },
-        { name: "BJ CW GAUGE",                        url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CW_GAUGE/CW_GAUGE.glb",                   cameraOrbit: "45deg 70deg 80%"  },
-        { name: "CENTER 동심도 측정기(RUN-OUT측정기)",   url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/RUN_OUT/RUN_OUT.glb",                     cameraOrbit: "45deg 70deg 80%"  },
-        { name: "PCD 측정기",                          url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PCD_/PCD_.glb",                           cameraOrbit: "45deg 70deg 80%"  },
-        { name: "PIN HOLE GAUGE",                      url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PIN_HOLE/PIN_HOLE.glb",                   cameraOrbit: "45deg 70deg 120%" },
-        { name: "R형상 측정기",                         url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Radius_Profile/Radius_Profile.glb",       cameraOrbit: "45deg 70deg 80%"  },
-        { name: "SCREW RING GAUGE",                    url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SCREW_RING/BJ_OUTERRACE.glb",             cameraOrbit: "45deg 70deg 80%"  },
-        { name: "SPLINE PITCH ERROR GAUGE",            url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SPLINE_PITCH/SPLINE_PITCH.glb",           cameraOrbit: "45deg 70deg 120%" },
-        { name: "TRACK 심위치 측정기",                  url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/TRACK_/TRACK_.glb",                       cameraOrbit: "45deg 70deg 80%"  },
-        { name: "VC 측정기",                            url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/VC_/VC_.glb",                             cameraOrbit: "45deg 70deg 80%"  },
-        { name: "내경 심위치 측정기",                    url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Inner_Diameter/Inner_Diameter.glb",       cameraOrbit: "45deg 70deg 80%"  },
-        { name: "내경기준외경동심도",                     url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Diameter_Based/Diameter_Based.glb",       cameraOrbit: "45deg 70deg 80%"  },
-        { name: "내경동심도&피치에러 측정기",              url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/ID_Pitch/ID_Pitch.glb",                   cameraOrbit: "45deg 70deg 80%"  },
-        { name: "센터 깊이(확인) 측정기",                 url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CONTACT_GAUGE/CONTACT_GAUGE.glb",         cameraOrbit: "45deg 70deg 80%"  },
-        { name: "스플라인 장착거리 측정기",               url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Spline_Mounting/Spline_Mounting.glb",     cameraOrbit: "45deg 70deg 80%"  },
-        { name: "코킹검사게이지",                        url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Caulking_/Caulking_.glb",                 cameraOrbit: "45deg 70deg 80%"  },
-        { name: "트랙기준외경동심도",                     url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Track_Based/Track_Based.glb",             cameraOrbit: "45deg 70deg 80%"  }
+        { name: "BALL 높이 측정기",                   url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/BALL_/BALL_.glb",                       cameraOrbit: "45deg 70deg 80%"  },
+        { name: "BJ CW GAUGE",                        url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CW_GAUGE/CW_GAUGE.glb",                 cameraOrbit: "45deg 70deg 80%"  },
+        { name: "CENTER 동심도 측정기(RUN-OUT측정기)", url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/RUN_OUT/RUN_OUT.glb",                   cameraOrbit: "45deg 70deg 80%"  },
+        { name: "PCD 측정기",                          url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PCD_/PCD_.glb",                         cameraOrbit: "45deg 70deg 80%"  },
+        { name: "PIN HOLE GAUGE",                      url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/PIN_HOLE/PIN_HOLE.glb",                 cameraOrbit: "45deg 70deg 120%" },
+        { name: "R형상 측정기",                        url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Radius_Profile/Radius_Profile.glb",     cameraOrbit: "45deg 70deg 80%"  },
+        { name: "SCREW RING GAUGE",                    url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SCREW_RING/BJ_OUTERRACE.glb",           cameraOrbit: "45deg 70deg 80%"  },
+        { name: "SPLINE PITCH ERROR GAUGE",            url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/SPLINE_PITCH/SPLINE_PITCH.glb",         cameraOrbit: "45deg 70deg 120%" },
+        { name: "TRACK 심위치 측정기",                 url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/TRACK_/TRACK_.glb",                     cameraOrbit: "45deg 70deg 80%"  },
+        { name: "VC 측정기",                           url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/VC_/VC_.glb",                           cameraOrbit: "45deg 70deg 80%"  },
+        { name: "내경 심위치 측정기",                  url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Inner_Diameter/Inner_Diameter.glb",     cameraOrbit: "45deg 70deg 80%"  },
+        { name: "내경기준외경동심도",                  url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Diameter_Based/Diameter_Based.glb",     cameraOrbit: "45deg 70deg 80%"  },
+        { name: "내경동심도&피치에러 측정기",          url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/ID_Pitch/ID_Pitch.glb",                 cameraOrbit: "45deg 70deg 80%"  },
+        { name: "센터 깊이(확인) 측정기",              url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/CONTACT_Gauge/CONTACT_Gauge.glb",       cameraOrbit: "45deg 70deg 80%"  },
+        { name: "스플라인 장착거리 측정기",            url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Spline_Mounting/Spline_Mounting.glb",   cameraOrbit: "45deg 70deg 80%"  },
+        { name: "코킹검사게이지",                      url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Caulking_/Caulking_.glb",               cameraOrbit: "45deg 70deg 80%"  },
+        { name: "트랙기준외경동심도",                  url: "https://disziplin1.github.io/TJT_/BJ_OUTERRACE/Track_Based/Track_Based.glb",           cameraOrbit: "45deg 70deg 80%"  }
       ];
 
       const PAUSE_BETWEEN = 1000;
@@ -233,10 +225,9 @@
       let pendingNext  = null;
       let loadGen      = 0;
 
-      /* 진행 중인 RAF·타이머 전부 취소 */
       function cancelAll() {
-        if (rafId)      { cancelAnimationFrame(rafId); rafId = null; }
-        if (pendingNext){ clearTimeout(pendingNext);   pendingNext = null; }
+        if (rafId)       { cancelAnimationFrame(rafId); rafId = null; }
+        if (pendingNext) { clearTimeout(pendingNext);   pendingNext = null; }
       }
 
       function formatTime(s) {
@@ -244,7 +235,6 @@
         return `${String(m).padStart(2,'0')}:${String(Math.floor(s % 60)).padStart(2,'0')}`;
       }
 
-      /* seekBar 업데이트 + 종료 감지 → 하나의 루프로 통합 */
       function tick() {
         if (viewer.duration) {
           seekBar.value = viewer.currentTime / viewer.duration;
@@ -265,13 +255,11 @@
         rafId = requestAnimationFrame(tick);
       }
 
-      /* 줌 */
       zoomSlider.addEventListener('input', () => {
         viewer.setAttribute('camera-orbit',
           `0deg 90deg ${110 - parseInt(zoomSlider.value)}%`);
       });
 
-      /* 시크바 */
       seekBar.addEventListener('input', () => {
         if (!viewer.duration) return;
         cancelAll();
@@ -282,7 +270,6 @@
         }
       });
 
-      /* 재생/정지 */
       toggleBtn.addEventListener('click', () => {
         if (isPlaying) {
           cancelAll();
@@ -296,7 +283,6 @@
         isPlaying = !isPlaying;
       });
 
-      /* 모델 로드 & 재생 — 단일 정의 */
       function playModel(index) {
         cancelAll();
         const gen   = ++loadGen;
@@ -308,7 +294,7 @@
         toggleBtn.textContent    = '❚❚ 정지';
 
         viewer.addEventListener('load', () => {
-          if (gen !== loadGen) return;  /* 더 최신 playModel이 호출됐으면 무시 */
+          if (gen !== loadGen) return;
           viewer.setAttribute('camera-orbit', model.cameraOrbit || '0deg 90deg 100%');
           viewer.currentTime = 0;
           viewer.play();
@@ -329,9 +315,8 @@
       window.addEventListener('DOMContentLoaded', () => {
         playModel(currentIndex);
 
-        /* ── 컨트롤 토글 ── */
-        const ctrlToggle  = document.getElementById('ctrlToggle');
-        const controlsEl  = document.querySelector('.controls');
+        const ctrlToggle   = document.getElementById('ctrlToggle');
+        const controlsEl   = document.querySelector('.controls');
         const zoomSliderEl = document.querySelector('.zoom-slider');
 
         function setControls(show) {
@@ -345,7 +330,6 @@
           setControls(!controlsEl.classList.contains('show'));
         });
 
-        // 터치 기기(아이패드·핸드폰)는 기본으로 열어둠
         if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
           setControls(true);
         }
