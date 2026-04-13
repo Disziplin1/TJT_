@@ -224,6 +224,73 @@
     .card-name { font-size: .78rem; font-weight: 600; line-height: 1.3; }
     .card-en   { font-size: .68rem; color: var(--muted); line-height: 1.2; }
 
+    /* ── FEATURED CARD (전체보기) ── */
+    .card.card-featured {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 1rem 1.2rem;
+      gap: 1rem;
+      background: linear-gradient(135deg, var(--accent2)22, var(--accent)18);
+      border-color: var(--accent)66;
+      border-width: 1.5px;
+    }
+    .card.card-featured:hover {
+      background: linear-gradient(135deg, var(--accent2)40, var(--accent)33);
+      border-color: var(--accent);
+    }
+    .card-featured .card-featured-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .card-featured .card-featured-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .2rem;
+      text-align: left;
+    }
+    .card-featured .card-name {
+      font-size: .9rem;
+      color: var(--text);
+    }
+    .card-featured .card-badge {
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #fff;
+      letter-spacing: .03em;
+    }
+    .card-featured .card-arrow {
+      margin-left: auto;
+      font-size: 1.1rem;
+      color: var(--accent);
+      opacity: .7;
+    }
+
+    /* 구분선 + 소제목 */
+    .sub-label {
+      grid-column: 1 / -1;
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: .4rem 0 .1rem;
+      border-top: 1px solid var(--border);
+      margin-top: .3rem;
+    }
+
+    /* edit mode: featured도 grab */
+    body.edit-mode .card.card-featured { flex-direction: row; }
+
 
     /* ── MODAL ── */
     .modal {
@@ -345,13 +412,18 @@
     <div class="section-header">
       <div class="section-dot"></div>
       <span class="section-title">BJ 내륜 (BJ INNERRACE)</span>
-      <span class="section-sub">12종</span>
+      <span class="section-sub">개별 11종</span>
     </div>
     <div class="grid cat-bji">
-      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/" target="_blank">
-        <div class="card-name">BJ 내륜 측정기</div>
-        <div class="card-en">BJ_INNERRACE</div>
+      <a class="card card-featured" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/" target="_blank">
+        <div class="card-featured-icon">▶</div>
+        <div class="card-featured-text">
+          <div class="card-name">BJ 내륜 측정기 — 전체 슬라이드쇼</div>
+          <div class="card-badge">ALL · 11종 자동재생</div>
+        </div>
+        <div class="card-arrow">›</div>
       </a>
+      <div class="sub-label">개별 측정기</div>
       <a class="card" href="https://disziplin1.github.io/TJT_/BJ_INNERRACE/Diagonal_PCD/" target="_blank">
         <div class="card-name">대각 PCD 측정기</div>
         <div class="card-en">Diagonal_PCD</div>
@@ -404,13 +476,18 @@
     <div class="section-header">
       <div class="section-dot"></div>
       <span class="section-title">BJ 외륜 (BJ OUTERRACE)</span>
-      <span class="section-sub">19종</span>
+      <span class="section-sub">개별 18종</span>
     </div>
     <div class="grid cat-bjo">
-      <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/" target="_blank">
-        <div class="card-name">BJ 외륜 측정기</div>
-        <div class="card-en">BJ_OUTERRACE</div>
+      <a class="card card-featured" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/" target="_blank">
+        <div class="card-featured-icon">▶</div>
+        <div class="card-featured-text">
+          <div class="card-name">BJ 외륜 측정기 — 전체 슬라이드쇼</div>
+          <div class="card-badge">ALL · 17종 자동재생</div>
+        </div>
+        <div class="card-arrow">›</div>
       </a>
+      <div class="sub-label">개별 측정기</div>
       <a class="card" href="https://disziplin1.github.io/TJT_/BJ_OUTERRACE/BALL_/" target="_blank">
         <div class="card-name">BALL 높이 측정기</div>
         <div class="card-en">BALL_</div>
