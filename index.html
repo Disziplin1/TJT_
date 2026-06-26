@@ -89,6 +89,51 @@
       color: #fff;
     }
 
+    /* ── SEARCH BAR ── */
+    .search-wrap {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+    }
+    .search-icon {
+      position: absolute;
+      left: .75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: .9rem;
+      pointer-events: none;
+      color: var(--muted);
+    }
+    .search-input {
+      width: 100%;
+      height: 34px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: .82rem;
+      padding: 0 2rem 0 2.1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); }
+    .search-clear {
+      position: absolute;
+      right: .5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: .9rem;
+      cursor: pointer;
+      padding: 0 .2rem;
+      display: none;
+      line-height: 1;
+    }
+    .search-clear.visible { display: block; }
+
     /* ── EDIT BANNER ── */
     .edit-banner {
       display: none;
@@ -142,6 +187,9 @@
     }
     body.edit-mode .tab .drag-handle { display: inline; }
     body.edit-mode .tab { cursor: default; }
+
+    /* 검색 중엔 탭 숨김 */
+    .tabs.search-active { display: none; }
 
     /* Sortable ghost */
     .sortable-ghost { opacity: .35; }
@@ -223,6 +271,7 @@
 
     .card-name { font-size: .78rem; font-weight: 600; line-height: 1.3; }
     .card-en   { font-size: .68rem; color: var(--muted); line-height: 1.2; }
+    .card-category { font-size: .62rem; color: var(--accent); font-weight: 700; margin-top: .1rem; }
 
     /* ── FEATURED CARD (전체보기) ── */
     .card.card-featured {
@@ -291,6 +340,34 @@
     /* edit mode: featured도 grab */
     body.edit-mode .card.card-featured { flex-direction: row; }
 
+    /* ── 검색 결과 섹션 ── */
+    #searchSection {
+      display: none;
+    }
+    #searchSection.visible {
+      display: block;
+    }
+    .search-result-count {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .search-result-count strong { color: var(--accent); }
+    .no-results {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .no-results .no-results-icon { font-size: 2.5rem; margin-bottom: .8rem; }
+
+    /* 검색어 하이라이트 */
+    mark {
+      background: rgba(182,95,207,.35);
+      color: var(--text);
+      border-radius: 3px;
+      padding: 0 1px;
+    }
 
     /* ── MODAL ── */
     .modal {
@@ -334,7 +411,6 @@
     @media (max-width: 480px) {
       .grid { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
       .card { padding: .7rem .5rem; gap: .35rem; }
-
     }
     @media (min-width: 600px) {
       .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
@@ -348,6 +424,11 @@
     <div class="logo">TJT</div>
     <h1>측정기 <span>3D</span> 뷰어</h1>
     <div class="header-actions">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" type="search" placeholder="측정기 검색..." autocomplete="off">
+        <button class="search-clear" id="searchClear" title="지우기">✕</button>
+      </div>
       <button class="icon-btn" id="themeBtn" title="테마 전환">🌙</button>
       <button class="icon-btn edit-btn" id="editBtn" title="편집 모드">✏️</button>
     </div>
@@ -367,6 +448,16 @@
 <div class="edit-banner" id="editBanner">✏️ 편집 모드 — 탭과 카드를 드래그해서 순서를 변경하세요</div>
 
 <main>
+
+  <!-- ── 검색 결과 ── -->
+  <section id="searchSection">
+    <div class="section-header">
+      <div class="section-dot"></div>
+      <span class="section-title">검색 결과</span>
+      <span class="section-sub" id="searchResultCount"></span>
+    </div>
+    <div class="grid" id="searchGrid"></div>
+  </section>
 
   <!-- ── GAUGE ── -->
   <section class="section" id="gauge">
@@ -807,19 +898,112 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-  /* ── 탭 전환 ── */
-  const tabsEl   = document.getElementById('tabs');
-  const sections = document.querySelectorAll('.section');
-  let currentTab = 'bjo';
+  /* ── 카드 데이터 수집 (검색용) ── */
+  const CATEGORY_LABELS = {
+    bjo: 'BJ 외륜', bji: 'BJ 내륜', bjc: 'BJ 케이지',
+    cj: 'CJ 외륜', sk: 'SK 외륜', tj: 'TJ 외륜',
+    trun: '트러니언', gauge: '게이지'
+  };
 
+  function collectCards() {
+    const result = [];
+    document.querySelectorAll('.section').forEach(sec => {
+      const catId = sec.id;
+      const catLabel = CATEGORY_LABELS[catId] || catId;
+      sec.querySelectorAll('.card:not(.card-featured)').forEach(card => {
+        result.push({
+          href: card.getAttribute('href'),
+          name: card.querySelector('.card-name')?.textContent || '',
+          en:   card.querySelector('.card-en')?.textContent || '',
+          category: catLabel,
+          catId
+        });
+      });
+    });
+    return result;
+  }
+
+  /* ── 검색 ── */
+  const searchInput   = document.getElementById('searchInput');
+  const searchClear   = document.getElementById('searchClear');
+  const searchSection = document.getElementById('searchSection');
+  const searchGrid    = document.getElementById('searchGrid');
+  const searchCount   = document.getElementById('searchResultCount');
+  const tabsEl        = document.getElementById('tabs');
+  const sections      = document.querySelectorAll('.section');
+  let currentTab = 'bjo';
+  let allCards = [];
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp(escaped, 'gi'), m => `<mark>${m}</mark>`);
+  }
+
+  function runSearch(query) {
+    const q = query.trim().toLowerCase();
+    searchClear.classList.toggle('visible', query.length > 0);
+
+    if (!q) {
+      searchSection.classList.remove('visible');
+      tabsEl.classList.remove('search-active');
+      switchTab(currentTab);
+      return;
+    }
+
+    // 탭 숨기고 일반 섹션 숨김
+    tabsEl.classList.add('search-active');
+    sections.forEach(s => s.classList.remove('visible'));
+    searchSection.classList.add('visible');
+
+    const hits = allCards.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.en.toLowerCase().includes(q) ||
+      c.category.toLowerCase().includes(q)
+    );
+
+    searchCount.innerHTML = hits.length > 0
+      ? `<strong>${hits.length}개</strong> 결과`
+      : '';
+
+    if (hits.length === 0) {
+      searchGrid.innerHTML = `
+        <div class="no-results" style="grid-column:1/-1">
+          <div class="no-results-icon">🔍</div>
+          <div>"<strong>${query}</strong>"에 대한 결과가 없습니다.</div>
+        </div>`;
+      return;
+    }
+
+    searchGrid.innerHTML = hits.map(c => `
+      <a class="card" href="${c.href}" target="_blank">
+        <div class="card-name">${highlight(c.name, query)}</div>
+        <div class="card-en">${highlight(c.en, query)}</div>
+        <div class="card-category">${c.category}</div>
+      </a>`).join('');
+
+    // 새로 생성된 카드에 모달 이벤트 연결
+    searchGrid.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', e => {
+        e.preventDefault();
+        if (!document.body.classList.contains('edit-mode')) openModal(card.getAttribute('href'));
+      });
+    });
+  }
+
+  searchInput.addEventListener('input', e => runSearch(e.target.value));
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchInput.focus();
+    runSearch('');
+  });
+
+  /* ── 탭 전환 ── */
   function switchTab(target) {
     currentTab = target;
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.target === target));
     sections.forEach(s => s.classList.toggle('visible', s.id === target));
-    // 편집 모드면 현재 섹션 카드도 sortable 적용
-    if (document.body.classList.contains('edit-mode')) {
-      enableCardSort(target);
-    }
+    if (document.body.classList.contains('edit-mode')) enableCardSort(target);
   }
 
   tabsEl.addEventListener('click', e => {
@@ -827,7 +1011,6 @@
     if (!tab) return;
     const target = tab.dataset.target;
     if (!target) return;
-    // 편집 모드 아닐 때만 링크처럼 동작
     if (!document.body.classList.contains('edit-mode')) {
       switchTab(target);
       tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -848,7 +1031,6 @@
     applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   });
 
-  // 저장된 테마 복원
   const savedTheme = localStorage.getItem('tjt_theme');
   if (savedTheme) applyTheme(savedTheme);
 
@@ -896,23 +1078,16 @@
     editBtn.textContent = isEdit ? '✅' : '✏️';
 
     if (isEdit) {
-      // 탭 정렬 활성화
       tabSortable = new Sortable(tabsEl, {
         animation: 150,
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
-        filter: '.active',  // 현재 활성 탭은 드래그 제외
-        onEnd: () => {
-          saveTabOrder();
-          // 첫 번째 탭을 active로 맞추지 않고 현재 active 유지
-        }
+        filter: '.active',
+        onEnd: () => saveTabOrder()
       });
-      // 현재 보이는 섹션 카드 정렬 활성화
       enableCardSort(currentTab);
     } else {
-      // 탭 정렬 비활성화
       if (tabSortable) { tabSortable.destroy(); tabSortable = null; }
-      // 모든 카드 정렬 비활성화
       Object.keys(cardSortables).forEach(id => disableCardSort(id));
     }
   });
@@ -922,8 +1097,7 @@
     const saved = localStorage.getItem('tjt_tab_order');
     if (!saved) return;
     try {
-      const order = JSON.parse(saved);
-      order.forEach(target => {
+      JSON.parse(saved).forEach(target => {
         const tab = tabsEl.querySelector(`[data-target="${target}"]`);
         if (tab) tabsEl.appendChild(tab);
       });
@@ -934,19 +1108,20 @@
     const saved = localStorage.getItem(`tjt_cards_${sectionId}`);
     if (!saved) return;
     try {
-      const order = JSON.parse(saved);
-      const grid = document.querySelector(`#${sectionId} .grid`);
-      if (!grid) return;
-      order.forEach(href => {
+      JSON.parse(saved).forEach(href => {
+        const grid = document.querySelector(`#${sectionId} .grid`);
+        if (!grid) return;
         const card = grid.querySelector(`[href="${href}"]`);
         if (card) grid.appendChild(card);
       });
     } catch(e) {}
   }
 
-  // 모든 섹션 순서 복원
   restoreTabOrder();
   ['gauge','bji','bjo','bjc','cj','sk','tj','trun'].forEach(restoreCardOrder);
+
+  /* ── 카드 데이터 초기화 (DOM 복원 후) ── */
+  allCards = collectCards();
 
   /* ── 모달 ── */
   const modal      = document.getElementById('modal');
@@ -965,13 +1140,10 @@
   }
 
   modalClose.addEventListener('click', closeModal);
-
-  // ESC 키로 닫기
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal();
   });
 
-  // 카드 클릭 → 모달로 열기 (편집 모드 제외)
   document.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', e => {
       e.preventDefault();
