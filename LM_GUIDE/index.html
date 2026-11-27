@@ -70,8 +70,7 @@
         box-sizing: border-box;
       }
 
-      .viewer-wrapper:hover .controls,
-      .viewer-wrapper:hover .zoom-slider {
+      .viewer-wrapper:hover .controls {
         opacity: 1;
       }
 
@@ -94,31 +93,9 @@
       .controls input[type="range"] { width: 100%; }
       .timecode { font-size: 0.9em; color: #333; margin-top: 4px; }
 
-      .zoom-slider {
-        position: absolute;
-        left: 20px;
-        top: 50%;
-        transform: translateY(-50%) rotate(-90deg);
-        z-index: 15;
-        opacity: 0;
-        transition: opacity 0.3s;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .zoom-slider label {
-        transform: rotate(90deg);
-        color: #333;
-        font-size: 14px;
-        font-weight: bold;
-      }
-
-      .zoom-slider input[type="range"] { width: 150px; }
-
       /* 휴대폰·태블릿: 조작부 항상 표시, 글자와 버튼 크게 */
       @media (hover: none) and (pointer: coarse) {
-        .controls, .zoom-slider { opacity: 1 !important; }
+        .controls { opacity: 1 !important; }
         .controls button { font-size: 1.15em; padding: 0.6em 1.1em; }
       }
 
@@ -126,7 +103,6 @@
       @media (max-width: 700px) {
         #modelName { top: 16px; left: 16px; font-size: 1.4rem; padding: 6px 12px; }
         .logo { top: 14px; right: 16px; width: 110px; }
-        .zoom-slider { left: -30px; }
       }
     </style>
   </head>
@@ -137,7 +113,8 @@
         id="viewer"
         src=""
         camera-controls
-        disable-zoom
+        min-camera-orbit="auto auto 40%"
+        max-camera-orbit="auto auto 160%"
         autoplay
         shadow-intensity="0.8"
         exposure="0.9"
@@ -154,11 +131,6 @@
         alt="TJT 로고"
         class="logo"
       />
-
-      <div class="zoom-slider">
-        <label for="zoomSlider">Zoom</label>
-        <input type="range" id="zoomSlider" min="0" max="100" value="10" />
-      </div>
 
       <div class="controls">
         <div class="button-row">
@@ -181,7 +153,6 @@
       const restartBtn = document.getElementById('restartBtn');
       const prevBtn = document.getElementById('prevBtn');
       const nextBtn = document.getElementById('nextBtn');
-      const zoomSlider = document.getElementById('zoomSlider');
 
       // 모델을 추가하려면 이 목록에 한 줄씩 추가하세요.
       // 모델이 1개면 ◀ ▶ 버튼은 자동으로 숨겨지고, 애니메이션이 반복 재생됩니다.
@@ -255,19 +226,12 @@
           adjustMaterials();
           viewer.cameraOrbit = model.cameraOrbit || '45deg 70deg 100%';
           viewer.jumpCameraToGoal();
-          zoomSlider.value = 10;
           viewer.currentTime = 0;
           switching = false;
           setPlaying(true);
         }, { once: true });
         viewer.src = model.url;
       }
-
-      zoomSlider.addEventListener('input', () => {
-        const zoomPercent = 110 - parseInt(zoomSlider.value);
-        const orbit = viewer.getCameraOrbit();
-        viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${zoomPercent}%`;
-      });
 
       seekBar.addEventListener('input', () => {
         isSeeking = true;
