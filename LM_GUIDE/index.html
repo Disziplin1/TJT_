@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LM 가이드 지그</title>
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"
+    ></script>
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #f5f5f5;
+        font-family: sans-serif;
+      }
+
+      .viewer-wrapper {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+      }
+
+      model-viewer {
+        width: 100%;
+        height: 100%;
+        display: block;
+        --poster-color: #f5f5f5;
+        --progress-bar-color: #1f7a6c;
+      }
+
+      #modelName {
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        z-index: 20;
+        font-size: 3rem;
+        font-weight: bold;
+        padding: 10px 20px;
+        background-color: rgba(50, 50, 50, 0.5);
+        color: white;
+        border-radius: 8px;
+      }
+
+      .logo {
+        position: absolute;
+        top: 40px;
+        right: 50px;
+        z-index: 20;
+        width: 200px;
+        height: auto;
+      }
+
+      .controls {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 8px;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s;
+        box-sizing: border-box;
+      }
+
+      .viewer-wrapper:hover .controls,
+      .viewer-wrapper:hover .zoom-slider {
+        opacity: 1;
+      }
+
+      .button-row {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .controls button {
+        font-size: 1em;
+        padding: 0.4em 1em;
+        border: none;
+        border-radius: 6px;
+        background-color: #f5f5f5;
+        cursor: pointer;
+      }
+
+      .controls input[type="range"] { width: 100%; }
+      .timecode { font-size: 0.9em; color: #333; margin-top: 4px; }
+
+      .zoom-slider {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%) rotate(-90deg);
+        z-index: 15;
+        opacity: 0;
+        transition: opacity 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .zoom-slider label {
+        transform: rotate(90deg);
+        color: #333;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .zoom-slider input[type="range"] { width: 150px; }
+
+      /* 휴대폰·태블릿: 조작부 항상 표시, 글자와 버튼 크게 */
+      @media (hover: none) and (pointer: coarse) {
+        .controls, .zoom-slider { opacity: 1 !important; }
+        .controls button { font-size: 1.15em; padding: 0.6em 1.1em; }
+      }
+
+      /* 좁은 화면: 제품명·로고 크기 축소 */
+      @media (max-width: 700px) {
+        #modelName { top: 16px; left: 16px; font-size: 1.4rem; padding: 6px 12px; }
+        .logo { top: 14px; right: 16px; width: 110px; }
+        .zoom-slider { left: -30px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="viewer-wrapper">
+      <model-viewer
+        id="viewer"
+        src=""
+        camera-controls
+        disable-zoom
+        autoplay
+        shadow-intensity="0.8"
+        exposure="0.9"
+        environment-image="neutral"
+        interaction-prompt="none"
+        camera-orbit="45deg 70deg 100%"
+        field-of-view="25deg"
+      >
+      </model-viewer>
+
+      <div id="modelName">제품명</div>
+      <img
+        src="https://tjteng.co.kr/images/tjteng.png"
+        alt="TJT 로고"
+        class="logo"
+      />
+
+      <div class="zoom-slider">
+        <label for="zoomSlider">Zoom</label>
+        <input type="range" id="zoomSlider" min="0" max="100" value="10" />
+      </div>
+
+      <div class="controls">
+        <div class="button-row">
+          <button class="nav-button" id="prevBtn">◀</button>
+          <button id="restartBtn">⟲ 처음으로</button>
+          <button id="toggleBtn">❚❚ 정지</button>
+          <button class="nav-button" id="nextBtn">▶</button>
+        </div>
+        <input type="range" id="seekBar" min="0" max="1" step="0.001" value="0" />
+        <div class="timecode" id="timeDisplay">00:00 / 00:00</div>
+      </div>
+    </div>
+
+    <script>
+      const viewer = document.getElementById('viewer');
+      const modelNameBox = document.getElementById('modelName');
+      const seekBar = document.getElementById('seekBar');
+      const timeDisplay = document.getElementById('timeDisplay');
+      const toggleBtn = document.getElementById('toggleBtn');
+      const restartBtn = document.getElementById('restartBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const zoomSlider = document.getElementById('zoomSlider');
+
+      // 모델을 추가하려면 이 목록에 한 줄씩 추가하세요.
+      // 모델이 1개면 ◀ ▶ 버튼은 자동으로 숨겨지고, 애니메이션이 반복 재생됩니다.
+      const modelList = [
+        { name: "LM 가이드 지그", url: "LM_GUIDE.glb", cameraOrbit: "45deg 70deg 100%" }
+      ];
+
+      const pauseBeforeNextModel = 1000;
+      let currentIndex = 0;
+      let isPlaying = true;
+      let isSeeking = false;
+      let switching = false;
+
+      const single = modelList.length === 1;
+      if (single) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+
+      function formatTime(seconds) {
+        const min = Math.floor(seconds / 60);
+        const sec = Math.floor(seconds % 60);
+        return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      }
+
+      // 웹 조명에서 거의 검게 보이는 무광 금속 부품을 진회색으로 보정
+      function adjustMaterials() {
+        if (!viewer.model) return;
+        for (const m of viewer.model.materials) {
+          const pbr = m.pbrMetallicRoughness;
+          const c = pbr.baseColorFactor;
+          if (pbr.metallicFactor > 0.5 && pbr.roughnessFactor > 0.8 && c[0] < 0.1) {
+            pbr.setBaseColorFactor([0.2, 0.2, 0.2, c[3]]);
+            pbr.setRoughnessFactor(0.7);
+          }
+        }
+      }
+
+      function setPlaying(p) {
+        isPlaying = p;
+        if (p) { viewer.play(); toggleBtn.textContent = '❚❚ 정지'; }
+        else { viewer.pause(); toggleBtn.textContent = '▶ 재생'; }
+      }
+
+      function goNext() {
+        if (switching) return;
+        switching = true;
+        viewer.pause();
+        setTimeout(() => {
+          currentIndex = (currentIndex + 1) % modelList.length;
+          playModel(currentIndex);
+        }, pauseBeforeNextModel);
+      }
+
+      function tick() {
+        const d = viewer.duration;
+        if (d) {
+          const t = viewer.currentTime % d;
+          if (!isSeeking) seekBar.value = t / d;
+          timeDisplay.textContent = `${formatTime(t)} / ${formatTime(d)}`;
+          // 여러 모델일 때만 끝나면 다음 모델로 넘어감
+          if (!single && isPlaying && !switching && viewer.currentTime >= d - 0.05) goNext();
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function playModel(index) {
+        const model = modelList[index];
+        modelNameBox.textContent = model.name;
+        viewer.addEventListener('load', () => {
+          adjustMaterials();
+          viewer.cameraOrbit = model.cameraOrbit || '45deg 70deg 100%';
+          viewer.jumpCameraToGoal();
+          zoomSlider.value = 10;
+          viewer.currentTime = 0;
+          switching = false;
+          setPlaying(true);
+        }, { once: true });
+        viewer.src = model.url;
+      }
+
+      zoomSlider.addEventListener('input', () => {
+        const zoomPercent = 110 - parseInt(zoomSlider.value);
+        const orbit = viewer.getCameraOrbit();
+        viewer.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${zoomPercent}%`;
+      });
+
+      seekBar.addEventListener('input', () => {
+        isSeeking = true;
+        if (viewer.duration) viewer.currentTime = seekBar.value * viewer.duration;
+      });
+      seekBar.addEventListener('change', () => { isSeeking = false; });
+
+      toggleBtn.addEventListener('click', () => setPlaying(!isPlaying));
+
+      restartBtn.addEventListener('click', () => {
+        viewer.currentTime = 0;
+        setPlaying(true);
+      });
+
+      prevBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + modelList.length) % modelList.length;
+        playModel(currentIndex);
+      });
+
+      nextBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % modelList.length;
+        playModel(currentIndex);
+      });
+
+      playModel(currentIndex);
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>
